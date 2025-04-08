@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_file, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS  
+from flask_cors import CORS
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -21,11 +21,11 @@ class Patient(db.Model):
     age = db.Column(db.Integer, nullable=False)
     dob = db.Column(db.String(10), nullable=False)
     admit_date = db.Column(db.String(10), nullable=False)
-    diseases = db.Column(db.String(200))
-    symptoms = db.Column(db.String(200))
-    treatment = db.Column(db.String(200))
-    condition = db.Column(db.String(200))
-    discharge_date = db.Column(db.String(10))
+    diseases = db.Column(db.String(200), default="N/A")
+    symptoms = db.Column(db.String(200), default="N/A")
+    treatment = db.Column(db.String(200), default="N/A")
+    condition = db.Column(db.String(200), default="N/A")
+    discharge_date = db.Column(db.String(10), default="N/A")
 
 # Create database
 with app.app_context():
@@ -50,18 +50,24 @@ def register_patient():
 def update_patient(id):
     patient = Patient.query.get_or_404(id)
     data = request.json
-    if 'diseases' in data:
-        patient.diseases = data['diseases']
-    if 'symptoms' in data:
-        patient.symptoms = data['symptoms']
-    if 'treatment' in data:
-        patient.treatment = data['treatment']
-    if 'condition' in data:
-        patient.condition = data['condition']
-    if 'discharge_date' in data:
-        patient.discharge_date = data['discharge_date']
+    patient.diseases = data.get('diseases', patient.diseases)
+    patient.symptoms = data.get('symptoms', patient.symptoms)
+    patient.treatment = data.get('treatment', patient.treatment)
+    patient.condition = data.get('condition', patient.condition)
+    patient.discharge_date = data.get('discharge_date', patient.discharge_date)
     db.session.commit()
     return jsonify({"message": "Patient updated successfully"}), 200
+
+# Delete a patient
+@app.route('/delete/<int:id>', methods=['DELETE'])
+def delete_patient(id):
+    patient = Patient.query.get(id)
+    if not patient:
+        return jsonify({"message": "Patient not found"}), 404
+
+    db.session.delete(patient)
+    db.session.commit()
+    return jsonify({"message": "Patient deleted successfully"}), 200
 
 # Generate PDF Report with Hospital Header and Signature
 @app.route('/generate-pdf/<int:id>', methods=['GET'])
@@ -92,11 +98,11 @@ def generate_pdf(id):
         ("Age", str(patient.age)),
         ("Date of Birth", patient.dob),
         ("Admit Date", patient.admit_date),
-        ("Diseases", patient.diseases if patient.diseases else "N/A"),
-        ("Symptoms", patient.symptoms if patient.symptoms else "N/A"),
-        ("Treatment", patient.treatment if patient.treatment else "N/A"),
-        ("Condition", patient.condition if patient.condition else "N/A"),
-        ("Discharge Date", patient.discharge_date if patient.discharge_date else "N/A"),
+        ("Diseases", patient.diseases),
+        ("Symptoms", patient.symptoms),
+        ("Treatment", patient.treatment),
+        ("Condition", patient.condition),
+        ("Discharge Date", patient.discharge_date),
     ]
 
     y_position -= 30
@@ -195,7 +201,7 @@ def get_patient(id):
             'treatment': patient.treatment,
             'discharge_date': patient.discharge_date
         }), 200
-    else:
+    else: 
         return jsonify({'message': 'Patient not found'}), 404
 
 if __name__ == '__main__':

@@ -17,7 +17,7 @@ const StartPage = () => {
     <div >
       <img src={stimage}
       alt="stimage"
-      className='flex flex-col items-center justify-center w-full h-full bg-center bg-no-repeat bg-cover brightness-75'/>
+      className='flex flex-col items-center justify-center w-full h-[800px] bg-center bg-no-repeat bg-cover brightness-75'/>
     <div className="absolute inset-0 flex items-center justify-center h-screen it ems-center ">
       <div className="w-full max-w-sm p-8 bg-white rounded-lg shadow-lg">
         <h2 className="mb-6 text-2xl font-semibold text-center">Welcome to Hospital Management System</h2>

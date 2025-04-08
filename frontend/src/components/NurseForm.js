@@ -16,7 +16,7 @@ const NurseForm = () => {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/patients'); // Endpoint to fetch all patients
+        const response = await axios.get('http://localhost:5000/patients');
         setPatients(response.data);
       } catch (error) {
         console.error('Error fetching patients:', error);
@@ -46,12 +46,12 @@ const NurseForm = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-center text-gray-700 mb-4">Nurse Update Form</h2>
+    <div className="max-w-md p-6 mx-auto bg-white rounded-lg shadow-md">
+      <h2 className="mb-4 text-2xl font-semibold text-center text-gray-700">Head of Nurse Update Form</h2>
 
       {/* Success & Error Messages */}
-      {successMessage && <p className="text-green-500 text-center">{successMessage}</p>}
-      {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
+      {successMessage && <p className="text-center text-green-500">{successMessage}</p>}
+      {errorMessage && <p className="text-center text-red-500">{errorMessage}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Select Patient ID */}
@@ -102,7 +102,7 @@ const NurseForm = () => {
         <div className="mt-4">
           <button
             type="submit"
-            className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Update Patient
           </button>

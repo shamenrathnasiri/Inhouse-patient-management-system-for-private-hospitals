@@ -38,9 +38,30 @@ const DoctorForm = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!formData.id) {
+      alert("Please select a patient to delete.");
+      return;
+    }
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this patient?");
+    if (confirmDelete) {
+      try {
+        await axios.delete(`http://localhost:5000/delete/${formData.id}`);
+        alert('Patient deleted successfully');
+        setFormData({ id: '', diseases: '', treatment: '', discharge_date: '' }); // Reset form
+        // Optionally, remove the deleted patient from the list immediately
+        setPatients(patients.filter(patient => patient.id !== formData.id));
+      } catch (error) {
+        console.error(error);
+        alert('Error deleting patient');
+      }
+    }
+  };
+
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Doctor Update Form</h2>
+    <div className="max-w-lg p-6 mx-auto bg-white rounded-lg shadow-md">
+      <h2 className="mb-4 text-2xl font-semibold text-center text-gray-800">Doctor Update Form</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label className="block text-gray-700">Select Patient ID</label>
@@ -90,24 +111,32 @@ const DoctorForm = () => {
             value={formData.discharge_date}
             onChange={(e) => setFormData({ ...formData, discharge_date: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
         <div className="mt-6">
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Update Patient
           </button>
         </div>
       </form>
-            <p>Update before proceed to generate pdf</p>
+
+      <div className="mt-4">
+        <button
+          onClick={handleDelete}
+          className="w-full px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+          Delete Patient
+        </button>
+      </div>
+
+      <p>Update before proceeding to generate PDF</p>
       <div className="mt-10">
-      <GeneratePDF patientId={formData.id}/>
-        </div>
-            
+        <GeneratePDF patientId={formData.id} />
+      </div>
     </div>
   );
 };
