@@ -7,7 +7,7 @@ const RegisterComponent = () => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    role: "attendant", // Default role
+    role: "attendant",
   });
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -28,7 +28,6 @@ const RegisterComponent = () => {
     setSuccessMessage("");
 
     try {
-      // Check if the username already exists
       const checkResponse = await axios.post("http://localhost:5000/check-user", {
         username: formData.username,
       });
@@ -38,98 +37,109 @@ const RegisterComponent = () => {
         return;
       }
 
-      // If the username is available, proceed with registration
-      const response = await axios.post("http://localhost:5000/register-user", formData);
-      setSuccessMessage("Registration successful! You can now log in.");
+      await axios.post("http://localhost:5000/register-user", formData);
+      setSuccessMessage("✅ Registration successful! Redirecting...");
 
       setTimeout(() => {
-        navigate("/login"); // Redirect to login after successful registration
+        navigate("/login");
       }, 2000);
     } catch (error) {
-      // Handle server-side or network errors
-      setErrorMessage("Error registering user. Please try again.");
+      setErrorMessage("❌ Error registering user. Please try again.");
       console.error("Error registering user:", error);
     }
   };
 
   return (
-    <div className="relative w-full h-screen">
-      {/* Background Image */}
-      <img
-        src={bgimage}
-        alt="background"
-        className="absolute top-0 left-0 object-cover w-full h-full brightness-75"
-      />
+    <div
+      className="flex items-center justify-center min-h-screen bg-center bg-cover"
+      style={{ backgroundImage: `url(${bgimage})` }}
+    >
+      <div className="w-full max-w-lg p-10 shadow-2xl bg-gradient-to-br from-white via-blue-50 to-blue-100 rounded-xl animate-fadeIn">
+        <h2 className="mb-6 text-3xl font-extrabold text-center text-blue-700">
+          Sign Up to Hospital Portal
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="username" className="block text-sm font-semibold text-gray-700">
+              Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 mt-1 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Your username"
+            />
+          </div>
 
-      {/* Centered Form */}
-      <div className="relative z-10 flex items-center justify-center w-full h-full">
-        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg bg-opacity-90">
-          <h2 className="text-2xl font-semibold text-center text-gray-700">Register</h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex flex-col">
-              <label htmlFor="username" className="text-sm text-gray-600">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Enter your username"
-                required
-                className="px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 mt-1 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="••••••••"
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="password" className="text-sm text-gray-600">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter your password"
-                required
-                className="px-4 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="flex flex-col space-y-2">
-              <label className="text-sm font-bold text-gray-600">Select Role</label>
+          <div>
+            <label className="block mb-1 text-sm font-semibold text-gray-700">Select Role</label>
+            <div className="flex space-x-4">
               {["attendant", "nurse", "doctor"].map((role) => (
-                <div key={role} className="flex items-center">
+                <label key={role} className="flex items-center space-x-2">
                   <input
                     type="radio"
-                    id={role}
                     name="role"
                     value={role}
                     checked={formData.role === role}
                     onChange={handleInputChange}
-                    className="mr-2"
+                    className="accent-blue-600"
                   />
-                  <label htmlFor={role} className="text-sm text-gray-700 capitalize">
+                  <span className="text-gray-700 capitalize">
                     {role === "nurse" ? "Head of Nurse" : role}
-                  </label>
-                </div>
+                  </span>
+                </label>
               ))}
             </div>
+          </div>
 
-            {errorMessage && <p className="text-center text-red-500">{errorMessage}</p>}
-            {successMessage && <p className="text-center text-green-500">{successMessage}</p>}
+          {errorMessage && <p className="text-sm text-center text-red-500">{errorMessage}</p>}
+          {successMessage && <p className="text-sm text-center text-green-600">{successMessage}</p>}
 
-            <button
-              type="submit"
-              className="w-full py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Register
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit"
+            className="w-full py-2 font-semibold text-white transition duration-300 bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            Register
+          </button>
+        </form>
       </div>
+
+      <style>
+        {`
+          .animate-fadeIn {
+            animation: fadeIn 1s ease-in-out;
+          }
+
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

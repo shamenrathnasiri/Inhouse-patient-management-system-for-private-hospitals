@@ -2,140 +2,125 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import GeneratePDF from './GeneratePDF';
 
-const DoctorForm = () => {
+const DoctorForm = ({ getPatients, id, setGetPatients }) => {
   const [patients, setPatients] = useState([]);
   const [formData, setFormData] = useState({
-    id: '',
     diseases: '',
     treatment: '',
     discharge_date: '',
   });
+  const [patientName, setPatientName] = useState('');
 
-  // Fetch list of patients
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         const response = await axios.get('http://localhost:5000/patients');
         setPatients(response.data);
+
+        if (id) {
+          const patient = response.data.find((p) => p.id === id);
+          if (patient) {
+            setPatientName(patient.name);
+            setFormData({
+              diseases: patient.diseases || '',
+              treatment: patient.treatment || '',
+              discharge_date: patient.discharge_date || '',
+            });
+          }
+        }
       } catch (error) {
         console.error('Error fetching patients:', error);
       }
     };
     fetchPatients();
-  }, []);
+  }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/update/${formData.id}`, {
+      // 1. Fetch existing full patient data
+      const res = await axios.get(`http://localhost:5000/patients/${id}`);
+      const existingData = res.data;
+
+      // 2. Create full payload with preserved data
+      const payload = {
+        name: existingData.name,
+        age: existingData.age,
+        dob: existingData.dob,
+        admit_date: existingData.admit_date,
+        symptoms: existingData.symptoms || [],
+        conditions: existingData.conditions || [],
         diseases: formData.diseases,
         treatment: formData.treatment,
         discharge_date: formData.discharge_date,
-      });
-      alert('Patient details updated successfully by Doctor');
+      };
+
+      // 3. Update full patient record
+      await axios.put(`http://localhost:5000/update/${id}`, payload);
+
+      alert('✅ Patient updated successfully by Doctor');
+      setGetPatients(!getPatients);
     } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!formData.id) {
-      alert("Please select a patient to delete.");
-      return;
-    }
-
-    const confirmDelete = window.confirm("Are you sure you want to delete this patient?");
-    if (confirmDelete) {
-      try {
-        await axios.delete(`http://localhost:5000/delete/${formData.id}`);
-        alert('Patient deleted successfully');
-        setFormData({ id: '', diseases: '', treatment: '', discharge_date: '' }); // Reset form
-        // Optionally, remove the deleted patient from the list immediately
-        setPatients(patients.filter(patient => patient.id !== formData.id));
-      } catch (error) {
-        console.error(error);
-        alert('Error deleting patient');
-      }
+      console.error('Error updating patient:', error);
+      alert('❌ Failed to update patient');
     }
   };
 
   return (
     <div className="max-w-lg p-6 mx-auto bg-white rounded-lg shadow-md">
-      <h2 className="mb-4 text-2xl font-semibold text-center text-gray-800">Doctor Update Form</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <label className="block text-gray-700">Select Patient ID</label>
-          <select
-            value={formData.id}
-            onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">Select a patient</option>
-            {patients.map((patient) => (
-              <option key={patient.id} value={patient.id}>
-                {patient.name} (ID: {patient.id})
-              </option>
-            ))}
-          </select>
-        </div>
+      <h2 className="mb-4 text-2xl font-semibold text-center text-gray-800">Doctor Update Form (ID: {id})</h2>
 
-        <div className="space-y-2">
-          <label className="block text-gray-700">Diseases</label>
+      {patientName && <h3 className="text-lg text-center text-gray-600">Patient: {patientName}</h3>}
+
+      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <div>
+          <label className="block mb-1 font-medium">Diseases</label>
           <input
             type="text"
-            placeholder="Enter diseases"
             value={formData.diseases}
             onChange={(e) => setFormData({ ...formData, diseases: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., Cold, Flu"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-gray-700">Treatment</label>
+        <div>
+          <label className="block mb-1 font-medium">Treatment</label>
           <input
             type="text"
-            placeholder="Enter treatment"
             value={formData.treatment}
             onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="e.g., Rest, Medication"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-gray-700">Discharge Date</label>
+        <div>
+          <label className="block mb-1 font-medium">Discharge Date</label>
           <input
             type="date"
             value={formData.discharge_date}
             onChange={(e) => setFormData({ ...formData, discharge_date: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+            required
           />
         </div>
 
-        <div className="mt-6">
-          <button
-            type="submit"
-            className="w-full px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Update Patient
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full px-4 py-2 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+        >
+          Update Patient
+        </button>
       </form>
 
-      <div className="mt-4">
-        <button
-          onClick={handleDelete}
-          className="w-full px-4 py-2 text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-        >
-          Delete Patient
-        </button>
-      </div>
-
-      <p>Update before proceeding to generate PDF</p>
-      <div className="mt-10">
-        <GeneratePDF patientId={formData.id} />
+      <div className="mt-6">
+        <p className="text-center">Update before proceeding to generate PDF</p>
+        <div className="mt-4">
+          <GeneratePDF patientId={id} />
+        </div>
       </div>
     </div>
   );

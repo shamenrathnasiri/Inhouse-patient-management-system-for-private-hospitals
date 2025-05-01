@@ -1,23 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { FaUserAlt, FaLock } from 'react-icons/fa';
 import loginImg from '../images/loginImg.jpg';
 
 const LoginComponent = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
-
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -40,50 +34,80 @@ const LoginComponent = () => {
 
   return (
     <div
-      className="flex items-center justify-center min-h-screen bg-center bg-no-repeat bg-cover brightness-75"
+      className="relative flex items-center justify-center min-h-screen bg-center bg-cover"
       style={{ backgroundImage: `url(${loginImg})` }}
     >
-      <div className="items-center max-w-sm p-6 mx-auto bg-white bg-opacity-100 rounded-lg shadow-lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <h2 className="text-2xl font-semibold text-center text-gray-700">Login</h2>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            placeholder="Username"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      {/* Glass Card */}
+      <div className="relative z-10 w-full max-w-md p-8 text-white border shadow-xl bg-white/5 backdrop-blur-md border-white/30 rounded-xl animate-slideUp">
+        <h2 className="mb-6 text-3xl font-bold text-center">Welcome Back</h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
 
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            placeholder="Password"
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex items-center px-4 py-2 rounded-md bg-white/20">
+            <FaUserAlt className="mr-3" />
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="Username"
+              required
+              className="w-full bg-transparent focus:outline-none placeholder-white/80"
+            />
+          </div>
 
-          {errorMessage && <p className="text-center text-red-500">{errorMessage}</p>}
+          <div className="flex items-center px-4 py-2 rounded-md bg-white/20">
+            <FaLock className="mr-3" />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Password"
+              required
+              className="w-full bg-transparent focus:outline-none placeholder-white/80"
+            />
+          </div>
+
+          {errorMessage && <p className="text-center text-red-400">{errorMessage}</p>}
 
           <button
             type="submit"
-            className="w-full py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full py-2 font-semibold transition-all duration-300 bg-blue-500 rounded-lg hover:bg-blue-600"
           >
             Login
           </button>
 
-          <p className="mt-4 text-sm text-center text-gray-700">
+          <p className="text-sm text-center text-white/80">
             Don't have an account?{' '}
-            <Link to="/register" className="text-blue-500 hover:text-blue-600">
+            <Link to="/register" className="text-blue-300 hover:text-blue-400">
               Register
             </Link>
           </p>
         </form>
       </div>
+
+      {/* Animation CSS */}
+      <style>
+        {`
+          .animate-slideUp {
+            animation: slideUp 1s ease forwards;
+          }
+
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(50px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
