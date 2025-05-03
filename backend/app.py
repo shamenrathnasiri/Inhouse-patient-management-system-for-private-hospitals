@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_file, session
 from flask_cors import CORS
 from datetime import datetime
@@ -7,7 +6,7 @@ from reportlab.pdfgen import canvas
 import io
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from database import db, Patient, User, Symptom, Condition
+from database import db, Patient, User, Treatment
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +20,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+# Register patient
 @app.route('/register', methods=['POST'])
 def register_patient():
     data = request.json
@@ -34,28 +34,29 @@ def register_patient():
     db.session.commit()
     return jsonify({"message": "Patient registered successfully"}), 201
 
+# Update patient with treatments
 @app.route('/update/<int:id>', methods=['PUT'])
 def update_patient(id):
     patient = Patient.query.get_or_404(id)
     data = request.json
 
-    patient.diseases = data.get('diseases', patient.diseases)
-    patient.treatment = data.get('treatment', patient.treatment)
     patient.discharge_date = data.get('discharge_date', patient.discharge_date)
 
-    Symptom.query.filter_by(patient_id=id).delete()
-    for s in data.get('symptoms', []):
-        new_symptom = Symptom(description=s['description'], date=s['date'], patient_id=id)
-        db.session.add(new_symptom)
-
-    Condition.query.filter_by(patient_id=id).delete()
-    for c in data.get('conditions', []):
-        new_condition = Condition(description=c['description'], date=c['date'], patient_id=id)
-        db.session.add(new_condition)
+    Treatment.query.filter_by(patient_id=id).delete()
+    for t in data.get('treatments', []):
+        new_treatment = Treatment(
+            patient_id=id,
+            symptom=t['symptom'],
+            condition=t['condition'],
+            date=t['date'],
+            prescription=t['prescription']
+        )
+        db.session.add(new_treatment)
 
     db.session.commit()
     return jsonify({"message": "Patient updated successfully"}), 200
 
+# Delete patient
 @app.route('/delete/<int:id>', methods=['DELETE'])
 def delete_patient(id):
     patient = Patient.query.get(id)
@@ -66,6 +67,7 @@ def delete_patient(id):
     db.session.commit()
     return jsonify({"message": "Patient deleted successfully"}), 200
 
+# Generate PDF report
 @app.route('/generate-pdf/<int:id>', methods=['GET'])
 def generate_pdf(id):
     patient = Patient.query.get_or_404(id)
@@ -76,45 +78,44 @@ def generate_pdf(id):
     p.setFont("Helvetica-Bold", 16)
     p.drawCentredString(width / 2, height - 50, "City General Hospital")
     p.setFont("Helvetica-Bold", 12)
-    y_position = height - 100
-    p.drawString(100, y_position, "Patient Report")
-    p.line(100, y_position - 5, 500, y_position - 5)
+    y = height - 100
+    p.drawString(100, y, "Patient Report")
+    p.line(100, y - 5, 500, y - 5)
 
     p.setFont("Helvetica", 10)
     details = [
-        ("Patient Name", patient.name),
+        ("Name", patient.name),
         ("Age", str(patient.age)),
-        ("Date of Birth", patient.dob),
+        ("DOB", patient.dob),
         ("Admit Date", patient.admit_date),
-        ("Diseases", patient.diseases),
-        ("Treatment", patient.treatment),
         ("Discharge Date", patient.discharge_date),
     ]
-    y_position -= 30
+    y -= 30
     for label, value in details:
-        p.drawString(100, y_position, f"{label}: {value}")
-        y_position -= 20
+        p.drawString(100, y, f"{label}: {value}")
+        y -= 20
 
-    p.drawString(100, y_position, "Symptoms:")
-    y_position -= 20
-    for symptom in patient.symptoms:
-        p.drawString(120, y_position, f"{symptom.date} - {symptom.description}")
-        y_position -= 15
-
-    p.drawString(100, y_position, "Conditions:")
-    y_position -= 20
-    for condition in patient.conditions:
-        p.drawString(120, y_position, f"{condition.date} - {condition.description}")
-        y_position -= 15
+    p.drawString(100, y, "Treatments:")
+    y -= 20
+    for t in patient.treatments:
+        p.drawString(120, y, f"Date: {t.date}")
+        y -= 15
+        p.drawString(140, y, f"Symptom: {t.symptom}")
+        y -= 15
+        p.drawString(140, y, f"Condition: {t.condition}")
+        y -= 15
+        p.drawString(140, y, f"Prescription: {t.prescription}")
+        y -= 25
 
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(100, y_position - 40, "Doctor's Signature: __________________")
+    p.drawString(100, y - 40, "Doctor's Signature: __________________")
 
     p.showPage()
     p.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"{patient.name}_report.pdf", mimetype='application/pdf')
 
+# Register user
 @app.route('/register-user', methods=['POST'])
 def register_user():
     data = request.json
@@ -133,6 +134,7 @@ def register_user():
 
     return jsonify({"message": "User registered successfully"}), 201
 
+# Login user
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -146,34 +148,134 @@ def login():
 
     return jsonify({"message": "Invalid credentials"}), 401
 
+# Check user exists
 @app.route('/check-user', methods=['POST'])
 def check_user():
     username = request.json.get('username')
     user = User.query.filter_by(username=username).first()
     return jsonify({'exists': bool(user)}), 200
 
+# Get all patients
 @app.route('/patients', methods=['GET'])
 def get_patients():
     patients = Patient.query.all()
     return jsonify([{"id": p.id, "name": p.name} for p in patients])
 
+# Get single patient details
 @app.route('/patients/<int:id>', methods=['GET'])
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
-    symptoms = [{"description": s.description, "date": s.date} for s in patient.symptoms]
-    conditions = [{"description": c.description, "date": c.date} for c in patient.conditions]
+    treatments = [{
+        "symptom": t.symptom,
+        "condition": t.condition,
+        "date": t.date,
+        "prescription": t.prescription
+    } for t in patient.treatments]
+
     return jsonify({
         'id': patient.id,
         'name': patient.name,
         'age': patient.age,
         'dob': patient.dob,
         'admit_date': patient.admit_date,
-        'diseases': patient.diseases,
-        'treatment': patient.treatment,
         'discharge_date': patient.discharge_date,
-        'symptoms': symptoms,
-        'conditions': conditions
+        'treatments': treatments
     }), 200
+    
+@app.route('/patients/all-details', methods=['GET'])
+def get_all_patients_with_details():
+    patients = Patient.query.all()
+    result = []
+
+    for p in patients:
+        treatments = [{
+            "symptom": t.symptom,
+            "condition": t.condition,
+            "date": t.date,
+            "prescription": t.prescription
+        } for t in p.treatments]
+
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "age": p.age,
+            "dob": p.dob,
+            "admit_date": p.admit_date,
+            "discharge_date": p.discharge_date,
+            "treatments": treatments
+        })
+
+    return jsonify(result), 200
+
+@app.route('/patients/with-prescriptions', methods=['GET'])
+def get_patients_with_prescriptions():
+    # Join Patient and Treatment, filter where prescription is not null or empty
+    results = db.session.query(Patient.id, Patient.name).join(Treatment).filter(Treatment.prescription != None, Treatment.prescription != '').distinct().all()
+
+    patients = [{"id": p.id, "name": p.name,} for p in results]
+    return jsonify(patients), 200
+
+@app.route('/patients/add-treatment-no-prescription', methods=['POST'])
+def add_treatment_without_prescription():
+    data = request.get_json()
+    patient_id = data.get('patient_id')
+    symptom = data.get('symptom')
+    condition = data.get('condition')
+    date = data.get('date')
+
+    if not all([patient_id, symptom, condition, date]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    treatment = Treatment(
+        patient_id=patient_id,
+        symptom=symptom,
+        condition=condition,
+        date=date,
+        prescription=""  # Explicitly setting prescription as None
+    )
+
+    db.session.add(treatment)
+    db.session.commit()
+
+    return jsonify({'message': 'Treatment without prescription added successfully'}), 201
+
+@app.route('/view-treatments/<int:patient_id>', methods=['GET'])
+def view_treatments_by_patient(patient_id):
+    try:
+        treatments = Treatment.query.filter_by(patient_id=patient_id).all()
+        
+        if not treatments:
+            return jsonify({'message': 'No treatments found for this patient.'}), 404
+
+        treatment_list = [{
+            'id': treatment.id,
+            'patient_id': treatment.patient_id,
+            'symptom': treatment.symptom,
+            'condition': treatment.condition,
+            'date': treatment.date,
+            'prescription': treatment.prescription
+        } for treatment in treatments]
+
+        return jsonify({'treatments': treatment_list}), 200
+
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch treatments', 'details': str(e)}), 500
+
+@app.route('/add-prescription/<int:id>', methods=['PUT'])
+def add_prescription(id):
+    data = request.json
+    prescription = data.get('prescription')
+    treatment = Treatment.query.get(id)
+    if not treatment:
+        return jsonify({'error': 'Treatment not found'}), 404
+    treatment.prescription = prescription
+    db.session.commit()
+    return jsonify({'message': 'Prescription added successfully'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
