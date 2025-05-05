@@ -1,4 +1,4 @@
-import React from 'react'
+import React  from 'react'
 import { useAppContext } from '../context/AppContext';
 import AddPatient from './attendant/AddPatient';
 import AllPatients from './attendant/AllPatients';
@@ -7,12 +7,15 @@ import UpdateTreatments from './nurse/UpdateTreatments';
 import ListPatient from './doctor/ListPatients';
 import ViewTreatments from './doctor/ViewTreatments';
 import PatientTreatmentView from './nurse/PatientTreatmentView';
+import Discharge from './doctor/Discharge';
+import GeneratePDF from './doctor/GeneratePDF';
 
 
 
 const Content = () => {
     const {content } = useAppContext();
 
+   
 
   return (
   
@@ -24,6 +27,9 @@ const Content = () => {
 {content === "patientcheck" && (<ListPatient />)}
 {content === "viewtreatments" && (<ViewTreatments />)}
 {content === "PatientTreatmentView" && (<PatientTreatmentView />)}
+{content === "discharge" && (<Discharge />)}
+{content === "generatepdf" && (<GeneratePDF />)}
+
 
   </>
   )

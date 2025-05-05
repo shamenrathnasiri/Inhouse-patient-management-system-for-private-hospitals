@@ -10,7 +10,7 @@ class Patient(db.Model):
     dob = db.Column(db.String(10), nullable=False)
     admit_date = db.Column(db.String(10), nullable=False)
     discharge_date = db.Column(db.String(10), default="N/A")
-    
+    doctor_signature = db.Column(db.Text) # NEW FIELD
     treatments = db.relationship('Treatment', backref='patient', cascade="all, delete-orphan")
 
 
@@ -18,7 +18,6 @@ class Patient(db.Model):
 class Treatment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
-    
     symptom = db.Column(db.String(200), nullable=False)
     condition = db.Column(db.String(200), nullable=False)
     date = db.Column(db.String(10), nullable=False)

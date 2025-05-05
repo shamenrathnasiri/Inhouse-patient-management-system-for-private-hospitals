@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 
 const ViewTreatments = () => {
-  const { patientId } = useAppContext();
+  const { patientId , setContent} = useAppContext();
   const [treatments, setTreatments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -122,7 +122,27 @@ const ViewTreatments = () => {
           </tbody>
         </table>
       )}
+      <div className="flex flex-col gap-4 mt-6 sm:flex-row">
+  <button
+    onClick={() => setContent("discharge")}
+    className="px-4 py-2 font-semibold text-white transition duration-300 bg-blue-600 rounded-lg shadow-md hover:bg-blue-700"
+  >
+    Discharge and Generate Medical Report
+  </button>
+
+  <button
+    onClick={() => setContent("patientcheck")}
+    className="px-4 py-2 font-semibold text-gray-800 transition duration-300 bg-gray-300 rounded-lg shadow-md hover:bg-gray-400"
+  >
+    Back
+  </button>
+</div>
+
+      
     </div>
+
+    
+    
   );
 };
 

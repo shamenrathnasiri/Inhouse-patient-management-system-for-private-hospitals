@@ -5,8 +5,12 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from datetime import date
 from database import db, Patient, User, Treatment
+import base64
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 app = Flask(__name__)
 CORS(app)
@@ -34,27 +38,6 @@ def register_patient():
     db.session.commit()
     return jsonify({"message": "Patient registered successfully"}), 201
 
-# Update patient with treatments
-@app.route('/update/<int:id>', methods=['PUT'])
-def update_patient(id):
-    patient = Patient.query.get_or_404(id)
-    data = request.json
-
-    patient.discharge_date = data.get('discharge_date', patient.discharge_date)
-
-    Treatment.query.filter_by(patient_id=id).delete()
-    for t in data.get('treatments', []):
-        new_treatment = Treatment(
-            patient_id=id,
-            symptom=t['symptom'],
-            condition=t['condition'],
-            date=t['date'],
-            prescription=t['prescription']
-        )
-        db.session.add(new_treatment)
-
-    db.session.commit()
-    return jsonify({"message": "Patient updated successfully"}), 200
 
 # Delete patient
 @app.route('/delete/<int:id>', methods=['DELETE'])
@@ -67,7 +50,7 @@ def delete_patient(id):
     db.session.commit()
     return jsonify({"message": "Patient deleted successfully"}), 200
 
-# Generate PDF report
+
 @app.route('/generate-pdf/<int:id>', methods=['GET'])
 def generate_pdf(id):
     patient = Patient.query.get_or_404(id)
@@ -75,6 +58,7 @@ def generate_pdf(id):
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
+    # Header
     p.setFont("Helvetica-Bold", 16)
     p.drawCentredString(width / 2, height - 50, "City General Hospital")
     p.setFont("Helvetica-Bold", 12)
@@ -82,38 +66,73 @@ def generate_pdf(id):
     p.drawString(100, y, "Patient Report")
     p.line(100, y - 5, 500, y - 5)
 
+    # Patient Details
     p.setFont("Helvetica", 10)
     details = [
         ("Name", patient.name),
         ("Age", str(patient.age)),
-        ("DOB", patient.dob),
-        ("Admit Date", patient.admit_date),
-        ("Discharge Date", patient.discharge_date),
+        ("DOB", str(patient.dob)),
+        ("Admit Date", str(patient.admit_date)),
+        ("Discharge Date", str(patient.discharge_date)),
     ]
     y -= 30
     for label, value in details:
         p.drawString(100, y, f"{label}: {value}")
         y -= 20
 
-    p.drawString(100, y, "Treatments:")
-    y -= 20
-    for t in patient.treatments:
-        p.drawString(120, y, f"Date: {t.date}")
-        y -= 15
-        p.drawString(140, y, f"Symptom: {t.symptom}")
-        y -= 15
-        p.drawString(140, y, f"Condition: {t.condition}")
-        y -= 15
-        p.drawString(140, y, f"Prescription: {t.prescription}")
-        y -= 25
+    # Treatments
+    if hasattr(patient, 'treatments') and patient.treatments:
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(100, y, "Treatment History:")
+        y -= 20
+        p.setFont("Helvetica", 10)
 
+        for t in patient.treatments:
+            p.drawString(120, y, f"Date: {t.date}")
+            y -= 15
+            p.drawString(140, y, f"Symptom: {t.symptom}")
+            y -= 15
+            p.drawString(140, y, f"Condition: {t.condition}")
+            y -= 15
+            p.drawString(140, y, f"Prescription: {t.prescription}")
+            y -= 25
+
+    # Doctor's Signature
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(100, y - 40, "Doctor's Signature: __________________")
+    if patient.doctor_signature:
+        try:
+            # Extract base64 image data (remove prefix if exists)
+            if "," in patient.doctor_signature:
+                header, encoded = patient.doctor_signature.split(",", 1)
+            else:
+                encoded = patient.doctor_signature
+            signature_bytes = base64.b64decode(encoded)
+            signature_image = ImageReader(io.BytesIO(signature_bytes))
 
+            # Label and image
+            p.drawString(100, y, "Doctor's Signature:")
+            y -= 50  # make space for image
+            p.drawImage(signature_image, 100, y, width=150, height=40, mask='auto')
+            y -= 60  # additional spacing after image
+        except Exception as e:
+            p.drawString(100, y, "Doctor's Signature: [Error displaying image]")
+            y -= 20
+    else:
+        p.drawString(100, y, "Doctor's Signature: __________________")
+        y -= 20
+
+    # Finalize PDF
     p.showPage()
     p.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"{patient.name}_report.pdf", mimetype='application/pdf')
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"{patient.name}_report.pdf",
+        mimetype='application/pdf'
+    )
+
 
 # Register user
 @app.route('/register-user', methods=['POST'])
@@ -181,6 +200,22 @@ def get_patient(id):
         'discharge_date': patient.discharge_date,
         'treatments': treatments
     }), 200
+    
+
+@app.route('/discharge/<int:id>', methods=['POST'])
+def discharge_patient(id):
+    data = request.json
+    discharge_date = data.get('discharge_date')
+    doctor_signature = data.get('doctor_signature')
+
+    patient = Patient.query.get_or_404(id)
+    patient.discharge_date = discharge_date
+    patient.doctor_signature = doctor_signature  # <--- Store it
+
+    db.session.commit()
+    return jsonify({"message": "Patient discharged successfully."}), 200
+
+        
     
 @app.route('/patients/all-details', methods=['GET'])
 def get_all_patients_with_details():

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 
 const PatientTreatmentView = () => {
-  const { patientId } = useAppContext();
+  const { patientId ,setContent} = useAppContext();
   const [treatments, setTreatments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -67,6 +67,14 @@ const PatientTreatmentView = () => {
       ) : (
         <p className="text-gray-600">No treatments to display.</p>
       )}
+      
+      <button
+       onClick={()=>setContent("viewpatients")}
+       className="px-4 py-2 mt-6 text-white bg-green-600 rounded tex-6"
+       
+      >
+        Back
+      </button>
     </div>
   );
 };

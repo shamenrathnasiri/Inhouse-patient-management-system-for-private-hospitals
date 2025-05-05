@@ -4,7 +4,7 @@ import Content from './Content';
 import { useAppContext } from '../context/AppContext';
 
 const HomePage = () => {
-  const { setCurrentUser } = useAppContext();
+  const { setCurrentUser} = useAppContext();
 
   useEffect(() => {
     const savedRole = localStorage.getItem('role');
@@ -12,6 +12,8 @@ const HomePage = () => {
       setCurrentUser(savedRole);
     }
   }, [setCurrentUser]);
+
+ 
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-white">
