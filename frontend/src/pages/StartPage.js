@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import stimage from '../images/welcome screen.jpg';
+import stimage from '../assets/images/welcome screen.jpg';
 
 const StartPage = () => {
   const navigate = useNavigate();

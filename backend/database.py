@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -22,6 +23,13 @@ class Treatment(db.Model):
     condition = db.Column(db.String(200), nullable=False)
     date = db.Column(db.String(10), nullable=False)
     prescription = db.Column(db.String(200), nullable=False)
+    
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender = db.Column(db.String(50), nullable=False)
+    receiver = db.Column(db.String(50), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 # User Model
@@ -30,3 +38,4 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
+ 

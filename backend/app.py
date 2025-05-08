@@ -6,11 +6,12 @@ from reportlab.pdfgen import canvas
 import io
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
-from database import db, Patient, User, Treatment
+from database import db, Patient, User, Treatment, ChatMessage 
 import base64
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+
 
 app = Flask(__name__)
 CORS(app)
@@ -23,6 +24,55 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+    
+# DELETE a patient by ID
+@app.route('/patient/delete/<int:patient_id>', methods=['DELETE'])
+def delete_patient(patient_id):
+    patient = Patient.query.get(patient_id)
+    if not patient:
+        return jsonify({'error': 'Patient not found'}), 404
+
+    db.session.delete(patient)
+    db.session.commit()
+    return jsonify({'message': 'Patient deleted successfully'}), 200
+
+    
+@app.route('/chat/send', methods=['POST'])
+def send_message():
+    data = request.json
+    new_msg = ChatMessage(
+        sender=data['sender'],
+        receiver=data['receiver'],
+        message=data['message']
+    )
+    db.session.add(new_msg)
+    db.session.commit()
+    return jsonify({"status": "Message sent"}), 201
+
+@app.route('/chat/messages', methods=['GET'])
+def get_messages():
+    print("lsdjflkdsj")
+    user1 = request.args.get('user1')
+    user2 = request.args.get('user2')
+
+    messages = ChatMessage.query.filter(
+        ((ChatMessage.sender == user1) & (ChatMessage.receiver == user2)) |
+        ((ChatMessage.sender == user2) & (ChatMessage.receiver == user1))
+    ).order_by(ChatMessage.timestamp).all()
+
+    result = [
+        {
+            "id": msg.id,
+            "sender": msg.sender,
+            "receiver": msg.receiver,
+            "message": msg.message,
+            "timestamp": msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for msg in messages
+    ]
+
+    return jsonify(result)
+
 
 # Register patient
 @app.route('/register', methods=['POST'])
@@ -38,17 +88,6 @@ def register_patient():
     db.session.commit()
     return jsonify({"message": "Patient registered successfully"}), 201
 
-
-# Delete patient
-@app.route('/delete/<int:id>', methods=['DELETE'])
-def delete_patient(id):
-    patient = Patient.query.get(id)
-    if not patient:
-        return jsonify({"message": "Patient not found"}), 404
-
-    db.session.delete(patient)
-    db.session.commit()
-    return jsonify({"message": "Patient deleted successfully"}), 200
 
 
 @app.route('/generate-pdf/<int:id>', methods=['GET'])
