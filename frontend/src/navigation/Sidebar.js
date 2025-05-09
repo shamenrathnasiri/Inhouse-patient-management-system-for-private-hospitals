@@ -21,7 +21,7 @@ const Sidebar = () => {
   };
 
   return (
-    <nav className="flex flex-col p-6 text-white shadow-2xl bg-gradient-to-r from-cyan-700 to-teal-700 rounded-2xl min-h-[550px] justify-between">
+    <nav className="flex flex-col p-6 text-white shadow-2xl bg-gradient-to-r from-cyan-700 to-teal-700 rounded-2xl min-h-[450px] justify-between ">
       <div className="flex flex-col gap-4">
         {currentUser === 'attendant' && (
           <>

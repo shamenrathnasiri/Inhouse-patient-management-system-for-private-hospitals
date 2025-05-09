@@ -48,11 +48,11 @@ const AddPatient = () => {
 
   return (
     <div className="register-patient-container">
-      <h2 className="mb-4 text-xl font-bold">Register a New Patient</h2>
+      <h2 className="mb-4 text-xl font-bold text-teal-800 text-[30px]">Register a New Patient</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold" htmlFor="name">Patient Name</label>
+          <label className="block mt-8 text-sm font-semibold" htmlFor="name">Patient Name</label>
           <input
             type="text"
             name="name"
@@ -99,7 +99,7 @@ const AddPatient = () => {
           />
         </div>
 
-        <button type="submit" className="w-full p-2 text-white bg-blue-500 rounded hover:bg-blue-600">
+        <button type="submit" className="w-[500px] p-2 text-white bg-teal-600 rounded shadow-md hover:bg-teal-700 hover:scale-110 transition-transform">
           Register Patient
         </button>
       </form>

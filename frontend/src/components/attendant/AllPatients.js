@@ -6,7 +6,7 @@ const AllPatients = () => {
 
   return (
     <div className="p-6 bg-white rounded shadow-md">
-      <h2 className="mb-6 text-2xl font-bold text-blue-600">All Patient Details</h2>
+      <h2 className="mb-6 text-2xl font-bold text-cyan-600">All Patient Details</h2>
 
       {loading && <p className="text-gray-600">Loading patients...</p>}
       {error && <p className="text-red-600">{error}</p>}

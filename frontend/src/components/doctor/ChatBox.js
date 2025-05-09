@@ -76,7 +76,9 @@ const ChatBox = () => {
     <div className="flex flex-col h-full max-w-3xl mx-auto bg-white border rounded-lg shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between p-4 text-white rounded-t-lg shadow-md bg-gradient-to-r from-teal-600 to-cyan-800">
-        <h3 className="text-xl font-bold tracking-wide">Chat with {receiver.charAt(0).toUpperCase() + receiver.slice(1)}</h3>
+        <h3 className="text-xl font-bold tracking-wide">
+          Chat with {receiver.charAt(0).toUpperCase() + receiver.slice(1)}
+        </h3>
       </div>
 
       {/* Chat body */}
@@ -89,7 +91,15 @@ const ChatBox = () => {
                 : 'bg-teal-600 text-white rounded-bl-none'}`}>
               <p className="whitespace-pre-line">{msg.message}</p>
               <div className="mt-1 text-xs text-right text-gray-300">
-                {new Date(msg.timestamp).toLocaleString()}
+                {new Date(msg.timestamp).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: true,
+                })}
               </div>
             </div>
           </div>

@@ -16,12 +16,17 @@ const HomePage = () => {
  
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-sky-100 via-blue-100 to-white">
+    <div className="flex h-screen bg-gradient-to-br from-Teal-100 via-emerald-100 to-emerald">
       {/* Sidebar */}
-      <div className="p-6 text-white shadow-2xl w-72 bg-gradient-to-b from-blue-800 to-indigo-900 rounded-r-3xl">
+      <div className="h-full p-6 text-white shadow-2xl w-72 bg-gradient-to-b from-teal-600 to-emerald-600 rounded-r-3xl">
         <h2 className="mb-8 text-3xl font-extrabold tracking-wide text-center text-white-200 drop-shadow">
-          Hospital System
+          Hospital Management System
         </h2>
+        <div className='mt-4'>
+        <p className="mb-4 text-white text-centbold font-semitracking-wide drop-shadow">
+          City general hospital
+        </p>
+        </div>
         <Sidebar />
       </div>
 
