@@ -91,13 +91,9 @@ const ChatBox = () => {
                 : 'bg-teal-600 text-white rounded-bl-none'}`}>
               <p className="whitespace-pre-line">{msg.message}</p>
               <div className="mt-1 text-xs text-right text-gray-300">
-                {new Date(msg.timestamp).toLocaleString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
+                {new Date(msg.timestamp).toLocaleTimeString('en-US', {
                   hour: '2-digit',
                   minute: '2-digit',
-                  second: '2-digit',
                   hour12: true,
                 })}
               </div>
