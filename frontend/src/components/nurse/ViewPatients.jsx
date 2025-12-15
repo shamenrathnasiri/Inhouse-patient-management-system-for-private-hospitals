@@ -100,8 +100,9 @@ const ViewPatients = () => {
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="text-2xl font-bold text-cyan-800">All Patient Details</h2>
 
-         <div className="w-full sm:w-auto sm:ml-4">
-            <div className="relative">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col w-full gap-3 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="search"
@@ -110,46 +111,57 @@ const ViewPatients = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-3 pl-10 py-1 text-sm border rounded-md"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 bg-gray-100 rounded-full p-1"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600">From</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="px-2 py-1 text-sm border rounded-md"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600">To</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="px-2 py-1 text-sm border rounded-md"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Search is live; Clear button placed next to dates */}
+              <button
+                onClick={() => { setFromDate(''); setToDate(''); setFilterApplied(false); setSearchQuery(''); }}
+                className="px-3 py-1 text-sm font-medium bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Clear
+              </button>
             </div>
           </div>
 
-        <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center -ml">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">From</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="px-2 py-1 text-sm border rounded-md"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">To</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="px-2 py-1 text-sm border rounded-md"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 ml-0 sm:ml-2">
-            <button
-              onClick={() => { setFromDate(''); setToDate(''); setFilterApplied(false); }}
-              className="px-3 py-1 text-sm font-medium bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Clear
-            </button>
+          <div className="flex items-center gap-2 mt-2 sm:mt-0">
             <button
               onClick={exportToCSV}
-              className="px-3 py-1 ml-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
+              className="px-6 py-1 ml-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
             >
               Export CSV
             </button>
           </div>
-
- 
         </div>
       </div>
 
