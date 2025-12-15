@@ -148,14 +148,14 @@ const ViewTreatments = () => {
           onClick={() => setContent("discharge")}
           className="w-full px-6 py-3 font-semibold text-white transition bg-blue-700 rounded-lg sm:w-auto hover:bg-blue-800"
         >
-          📝 Discharge and Generate Medical Report
+           Discharge and Generate Medical Report
         </button>
 
         <button
           onClick={() => setContent("patientcheck")}
           className="w-full px-6 py-3 font-semibold text-gray-800 transition bg-gray-200 rounded-lg shadow-md sm:w-auto hover:bg-gray-300"
         >
-          🔙 Back
+           Back
         </button>
       </div>
     </div>
