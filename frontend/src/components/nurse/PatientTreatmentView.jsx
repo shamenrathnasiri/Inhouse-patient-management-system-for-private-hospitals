@@ -75,6 +75,26 @@ const PatientTreatmentView = () => {
       >
         Back
       </button>
+      <button
+        onClick={async () => {
+          try {
+            const res = await axios.get(`http://localhost:5000/generate-treatment-pdf/${patientId}`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `patient_${patientId}_treatments.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Failed to download PDF', err);
+          }
+        }}
+        className="px-4 py-2 mt-6 ml-4 text-white bg-blue-600 rounded"
+      >
+        Download PDF
+      </button>
     </div>
   );
 };

@@ -173,6 +173,87 @@ def generate_pdf(id):
     )
 
 
+@app.route('/generate-treatment-pdf/<int:patient_id>', methods=['GET'])
+def generate_treatment_pdf(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    treatments = Treatment.query.filter_by(patient_id=patient_id).order_by(Treatment.date).all()
+
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # Header
+    p.setFont("Helvetica-Bold", 16)
+    p.drawCentredString(width / 2, height - 50, "City General Hospital")
+    p.setFont("Helvetica-Bold", 12)
+    y = height - 90
+    p.drawString(50, y, "Patient Treatment History")
+    p.setFont("Helvetica", 10)
+    y -= 20
+
+    # Patient basic info
+    p.drawString(50, y, f"Name: {patient.name}")
+    p.drawString(300, y, f"Age: {patient.age}")
+    y -= 15
+    p.drawString(50, y, f"DOB: {patient.dob}")
+    p.drawString(300, y, f"Admit Date: {patient.admit_date}")
+    y -= 25
+
+    # Created date
+    created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    p.drawString(50, y, f"Created date: {created_at}")
+    y -= 20
+
+    # Treatments table header
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(50, y, "Date")
+    p.drawString(120, y, "Symptom")
+    p.drawString(300, y, "Condition")
+    p.drawString(450, y, "Prescription")
+    y -= 12
+    p.line(50, y, width - 50, y)
+    y -= 10
+    p.setFont("Helvetica", 10)
+
+    if treatments:
+        for t in treatments:
+            if y < 120:
+                p.showPage()
+                y = height - 80
+            p.drawString(50, y, str(t.date))
+            p.drawString(120, y, (t.symptom or '')[:30])
+            p.drawString(300, y, (t.condition or '')[:30])
+            p.drawString(450, y, (t.prescription or 'N/A')[:30])
+            y -= 18
+    else:
+        p.drawString(50, y, "No treatments found for this patient.")
+        y -= 20
+
+    # Add space then signature areas
+    if y < 220:
+        p.showPage()
+        y = height - 80
+
+    y -= 20
+    p.line(80, y, 260, y)
+    p.drawString(80, y - 12, "Nurse Signature")
+
+    p.line(320, y, 500, y)
+    p.drawString(320, y - 12, "Doctor Signature")
+
+    # Finalize
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"{patient.name}_treatments_{datetime.now().date()}.pdf",
+        mimetype='application/pdf'
+    )
+
+
 # Register user
 @app.route('/register-user', methods=['POST'])
 def register_user():
