@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import bgimage from "../assets/images/regbg.jpg";
 
 const RegisterComponent = () => {
@@ -21,6 +22,8 @@ const RegisterComponent = () => {
       [name]: value,
     }));
   };
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,6 +58,16 @@ const RegisterComponent = () => {
       style={{ backgroundImage: `url(${bgimage})` }}
     >
       <div className="w-full max-w-lg p-10 shadow-2xl bg-gradient-to-br from-white via-blue-50 to-blue-100 rounded-xl animate-fadeIn">
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-sm text-blue-600 hover:underline"
+            aria-label="Back to Login"
+          >
+            ← Back to Login
+          </button>
+        </div>
         <h2 className="mb-6 text-3xl font-extrabold text-center text-blue-700">
           Sign Up to Hospital Portal
         </h2>
@@ -78,15 +91,25 @@ const RegisterComponent = () => {
             <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 mt-1 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-2 pr-10 mt-1 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
 
           <div>

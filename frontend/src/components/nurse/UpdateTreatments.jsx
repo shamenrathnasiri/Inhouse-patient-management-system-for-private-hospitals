@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 
 const UpdateTreatments = () => {
-  const { patientId , setContent} = useAppContext();
+  const { patientId, setContent } = useAppContext();
 
   const [symptom, setSymptom] = useState('');
   const [condition, setCondition] = useState('');
@@ -42,7 +42,16 @@ const UpdateTreatments = () => {
 
   return (
     <div className="add-treatment-container">
-      <h2 className="mb-4 text-2xl font-bold">Add Treatment (No Prescription)</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">Add Treatment (No Prescription)</h2>
+        <button
+          onClick={() => setContent('viewpatients')}
+          className="px-3 py-1 text-sm font-medium text-white bg-gray-600 rounded hover:bg-gray-700"
+          aria-label="Back to All Patient Details"
+        >
+          ← Back to All Patient Details
+        </button>
+      </div>
 
       <div className="mb-4">
         <label className="block text-sm font-semibold">Symptom</label>
