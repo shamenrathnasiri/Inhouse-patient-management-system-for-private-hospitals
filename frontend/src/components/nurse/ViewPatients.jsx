@@ -3,7 +3,7 @@ import { FaSearch } from 'react-icons/fa';
 import { useAppContext } from '../../context/AppContext';
 
 const ViewPatients = () => {
-  const { setPatientId, setContent, patients, loading, error } = useAppContext();
+  const { setPatientId, setContent, patients, loading, error, currentUser } = useAppContext();
 
   const handleConditionClick = (patientId) => {
     setPatientId(patientId);
@@ -44,12 +44,76 @@ const ViewPatients = () => {
     });
   }, [patients, fromDate, toDate, filterApplied, searchQuery]);
 
+  const exportToCSV = () => {
+    const rows = filteredPatients.map((p) => ({
+      'Patient name': p.name || '',
+      Age: p.age || '',
+      'Date of birth': p.dob || '',
+      'Admission date': p.admit_date || '',
+    }));
+
+    if (rows.length === 0) {
+      // nothing to export
+      return;
+    }
+
+    const headers = ['Patient name', 'Age', 'Date of birth', 'Admission date'];
+    const csvLines = [];
+
+    // add metadata: Hospital name (from HomePage) and Created date
+    const hospitalName = 'City general hospital';
+    const createdDate = new Date().toLocaleString();
+
+    // clear title + metadata for readability in Excel
+    csvLines.push(`"Patient List Report"`);
+    csvLines.push(`Hospital: "${hospitalName.replace(/"/g, '""')}"`);
+    csvLines.push(`Created date: "${String(createdDate).replace(/"/g, '""')}"`);
+    csvLines.push('');
+
+    // header row (column titles)
+    csvLines.push(headers.join(','));
+
+    for (const r of rows) {
+      const line = headers
+        .map((h) => `"${String(r[h] || '').replace(/"/g, '""')}"`)
+        .join(',');
+      csvLines.push(line);
+    }
+
+    const csv = csvLines.join('\n');
+    // prepend UTF-8 BOM so Excel recognizes UTF-8 and displays correctly
+    const csvWithBOM = '\uFEFF' + csv;
+    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeHospital = hospitalName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+    a.download = `${safeHospital}_patients_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6 bg-white rounded shadow-md">
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h2 className="text-2xl font-bold text-cyan-800">All Patient Details</h2>
 
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+         <div className="w-full sm:w-auto sm:ml-4">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="search"
+                placeholder="Search patient name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 pl-10 py-1 text-sm border rounded-md"
+              />
+            </div>
+          </div>
+
+        <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center -ml">
           <div className="flex items-center space-x-2">
             <label className="text-sm text-gray-600">From</label>
             <input
@@ -77,20 +141,15 @@ const ViewPatients = () => {
             >
               Clear
             </button>
+            <button
+              onClick={exportToCSV}
+              className="px-3 py-1 ml-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
+            >
+              Export CSV
+            </button>
           </div>
 
-          <div className="w-full sm:w-auto sm:ml-4">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="search"
-                placeholder="Search patient name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 pl-10 py-1 text-sm border rounded-md"
-              />
-            </div>
-          </div>
+ 
         </div>
       </div>
 

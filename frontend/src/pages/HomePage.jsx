@@ -23,6 +23,7 @@ const HomePage = () => {
           Hospital Management System
         </h2>
         <div className='mt-4'>
+{/* hospital name */}
         <p className="mb-4 text-white text-centbold font-semitracking-wide drop-shadow">
           City general hospital
         </p>
