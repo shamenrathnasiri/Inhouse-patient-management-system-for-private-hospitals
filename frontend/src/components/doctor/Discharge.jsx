@@ -60,7 +60,15 @@ const Discharge = () => {
 
   return (
     <div className="max-w-4xl p-8 mx-auto space-y-6 shadow-xl bg-gradient-to-r from-blue-50 to-white rounded-xl">
-      <h2 className="text-3xl font-bold text-center text-blue-800">Patient Discharge Details</h2>
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => { setContent('patientcheck'); setSigned(false); }}
+          className="px-4 py-2 text-sm font-semibold text-white bg-gray-600 rounded hover:bg-gray-700"
+        >
+          Back to All Patient Details
+        </button>
+        <h2 className="text-3xl font-bold text-center text-blue-800 flex-1">Patient Discharge Details</h2>
+      </div>
 
       {/* Patient Info */}
       <table className="w-full text-sm bg-white border border-gray-300 shadow-sm rounded-xl">
