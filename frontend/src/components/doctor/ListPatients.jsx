@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ListPatient = () => {
   const { setPatientId, setContent, patients = [], loading, error } = useAppContext();
@@ -79,6 +81,107 @@ const ListPatient = () => {
       : `patients_all_${new Date().toISOString().slice(0,10)}.csv`;
 
     exportCSV(rows, filename);
+  };
+
+  const exportToPDF = () => {
+    const s = startDate ? new Date(startDate) : null;
+    const e = endDate ? new Date(endDate) : null;
+    if (e) e.setHours(23,59,59,999);
+
+    const rows = (patients || []).filter((p) => {
+      const nameMatch = searchName
+        ? (p.name || '').toLowerCase().includes(searchName.trim().toLowerCase())
+        : true;
+      if (!s && !e) return nameMatch;
+      const admit = p.admit_date ? new Date(p.admit_date) : null;
+      if (!admit) return nameMatch;
+      let afterStart = true;
+      let beforeEnd = true;
+      if (s) afterStart = admit >= s;
+      if (e) beforeEnd = admit <= e;
+      return nameMatch && afterStart && beforeEnd;
+    }).map((p) => {
+      const rawDischarge = p.discharge_date || p.discharge || p.dischargeDate || p.discharge_on || p.dischargeOn;
+      return [
+        p.id ?? '',
+        p.name ?? '',
+        p.age ?? '',
+        p.dob ?? '',
+        p.admit_date ?? '',
+        rawDischarge ? rawDischarge : 'Not Yet',
+        rawDischarge ? 'Discharged' : 'Admitted'
+      ];
+    });
+
+    const doc = new jsPDF();
+    const hospitalName = 'City General Hospital';
+    const currentDate = new Date().toLocaleString();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Add header background
+    doc.setFillColor(14, 116, 144); // cyan-800
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add hospital name
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(hospitalName, pageWidth / 2, 15, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Patient Details Report', pageWidth / 2, 25, { align: 'center' });
+
+    // Add metadata
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${currentDate}`, 14, 45);
+    if (s || e) {
+      const rangeText = `Date Range: ${s ? s.toISOString().slice(0,10) : 'from'} to ${e ? e.toISOString().slice(0,10) : 'to'}`;
+      doc.text(rangeText, 14, 52);
+    }
+
+    // Add table
+    autoTable(doc, {
+      startY: (s || e) ? 58 : 52,
+      head: [['ID', 'Name', 'Age', 'DOB', 'Admission', 'Discharge', 'Status']],
+      body: rows,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [14, 116, 144],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      alternateRowStyles: {
+        fillColor: [240, 249, 255]
+      },
+      margin: { top: 10, left: 14, right: 14 }
+    });
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        pageWidth / 2,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+
+    const filename = s || e
+      ? `patients_${s ? s.toISOString().slice(0,10) : 'from'}_to_${e ? e.toISOString().slice(0,10) : 'to'}.pdf`
+      : `patients_all_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
   };
 
   const exportByDateRangeXLSX = async () => {
@@ -215,6 +318,16 @@ const ListPatient = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-cyan-800">All Patient Details</h2>
         <div className="flex items-center gap-2">
+          <button
+            onClick={exportToPDF}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded shadow-sm"
+            title="Export selected patients to PDF"
+          >
+            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span className="hidden sm:inline">Export PDF</span>
+          </button>
           <button
             onClick={exportByDateRangeXLSX}
             className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow-sm"

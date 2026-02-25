@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import { useAppContext } from '../../context/AppContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ViewPatients = () => {
   const { setPatientId, setContent, patients, loading, error, currentUser } = useAppContext();
@@ -43,6 +45,88 @@ const ViewPatients = () => {
       return true;
     });
   }, [patients, fromDate, toDate, filterApplied, searchQuery]);
+
+  const exportToPDF = () => {
+    const rows = filteredPatients.map((p) => [
+      p.name || '',
+      p.age || '',
+      p.dob || '',
+      p.admit_date || ''
+    ]);
+
+    if (rows.length === 0) {
+      alert('No patients to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const hospitalName = 'City General Hospital';
+    const currentDate = new Date().toLocaleString();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Add header background
+    doc.setFillColor(14, 116, 144); // cyan-800
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add hospital name
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text(hospitalName, pageWidth / 2, 15, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Patient Details Report (Nurse)', pageWidth / 2, 25, { align: 'center' });
+
+    // Add metadata
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${currentDate}`, 14, 45);
+    if (fromDate || toDate) {
+      const rangeText = `Date Range: ${fromDate || 'from'} to ${toDate || 'to'}`;
+      doc.text(rangeText, 14, 52);
+    }
+
+    // Add table
+    autoTable(doc, {
+      startY: (fromDate || toDate) ? 58 : 52,
+      head: [['Patient Name', 'Age', 'Date of Birth', 'Admission Date']],
+      body: rows,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [14, 116, 144],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 11
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 4
+      },
+      alternateRowStyles: {
+        fillColor: [240, 249, 255]
+      },
+      margin: { top: 10, left: 14, right: 14 }
+    });
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        pageWidth / 2,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+
+    const safeHospital = hospitalName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
+    doc.save(`${safeHospital}_patients_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
 
   const exportToCSV = () => {
     const rows = filteredPatients.map((p) => ({
@@ -156,8 +240,17 @@ const ViewPatients = () => {
 
           <div className="flex items-center gap-2 mt-2 sm:mt-0">
             <button
+              onClick={exportToPDF}
+              className="px-6 py-1 ml-2 text-sm font-medium bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Export PDF
+            </button>
+            <button
               onClick={exportToCSV}
-              className="px-6 py-1 ml-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
+              className="px-6 py-1 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700"
             >
               Export CSV
             </button>

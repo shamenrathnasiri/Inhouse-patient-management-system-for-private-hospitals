@@ -29,7 +29,7 @@ class ChatMessage(db.Model):
     sender = db.Column(db.String(50), nullable=False)
     receiver = db.Column(db.String(50), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
 
 # User Model

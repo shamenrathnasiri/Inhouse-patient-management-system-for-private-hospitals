@@ -44,13 +44,22 @@ const ChatBox = () => {
           message: newMessage,
         });
 
+        // Format timestamp to match backend format: 'YYYY-MM-DD HH:MM:SS'
+        const now = new Date();
+        const formattedTimestamp = now.getFullYear() + '-' +
+          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+          String(now.getDate()).padStart(2, '0') + ' ' +
+          String(now.getHours()).padStart(2, '0') + ':' +
+          String(now.getMinutes()).padStart(2, '0') + ':' +
+          String(now.getSeconds()).padStart(2, '0');
+
         setMessages(prevMessages => [
           ...prevMessages,
           {
             sender,
             receiver,
             message: newMessage,
-            timestamp: new Date().toISOString(),
+            timestamp: formattedTimestamp,
             id: Date.now(),
           },
         ]);
@@ -91,11 +100,16 @@ const ChatBox = () => {
                 : 'bg-teal-600 text-white rounded-bl-none'}`}>
               <p className="whitespace-pre-line">{msg.message}</p>
               <div className="mt-1 text-xs text-right text-gray-300">
-                {new Date(msg.timestamp).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                })}
+                {(() => {
+                  // Parse timestamp format 'YYYY-MM-DD HH:MM:SS' from backend
+                  const timestamp = msg.timestamp.replace(' ', 'T');
+                  const date = new Date(timestamp);
+                  return date.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  });
+                })()}
               </div>
             </div>
           </div>
