@@ -8,10 +8,29 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
 from database import db, Patient, User, Treatment, ChatMessage 
 import base64
+import mysql.connector
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 
+
+# Auto-create the database if it doesn't exist
+def ensure_database_exists():
+    try:
+        connection = mysql.connector.connect(
+            host='localhost',
+            user='root',
+            password=''
+        )
+        cursor = connection.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS hospital_db")
+        print("Database 'hospital_db' is ready.")
+        cursor.close()
+        connection.close()
+    except Exception as e:
+        print(f"Error creating database: {e}")
+
+ensure_database_exists()
 
 app = Flask(__name__)
 CORS(app)
