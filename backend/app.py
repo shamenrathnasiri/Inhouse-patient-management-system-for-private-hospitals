@@ -43,6 +43,14 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+    # Ensure is_read column exists on chat_message table (migration for existing DBs)
+    try:
+        from sqlalchemy import text
+        db.session.execute(text("ALTER TABLE chat_message ADD COLUMN is_read BOOLEAN DEFAULT 0"))
+        db.session.commit()
+        print("Added 'is_read' column to chat_message table.")
+    except Exception:
+        db.session.rollback()  # Column likely already exists
     
 # DELETE a patient by ID
 @app.route('/patient/delete/<int:patient_id>', methods=['DELETE'])
@@ -92,6 +100,26 @@ def get_messages():
 
     return jsonify(result)
 
+
+# Get unread message count for a user
+@app.route('/chat/unread-count', methods=['GET'])
+def unread_count():
+    user = request.args.get('user')
+    if not user:
+        return jsonify({"error": "User parameter required"}), 400
+    count = ChatMessage.query.filter_by(receiver=user, is_read=False).count()
+    return jsonify({"unread_count": count})
+
+# Mark all messages as read for a user
+@app.route('/chat/mark-read', methods=['POST'])
+def mark_read():
+    data = request.json
+    user = data.get('user')
+    if not user:
+        return jsonify({"error": "User parameter required"}), 400
+    ChatMessage.query.filter_by(receiver=user, is_read=False).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"status": "Messages marked as read"}), 200
 
 # Register patient
 @app.route('/register', methods=['POST'])

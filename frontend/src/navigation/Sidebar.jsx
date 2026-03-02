@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 const Sidebar = () => {
-  const { setContent, currentUser } = useAppContext();
+  const { setContent, currentUser, unreadCount, markMessagesAsRead } = useAppContext();
   const navigate = useNavigate(); // hook for navigation
 
   const commonButtonClasses =
@@ -41,8 +41,13 @@ const Sidebar = () => {
             <button onClick={() => setContent('viewpatients')} className={commonButtonClasses}>
               View Patients
             </button>
-            <button onClick={() => setContent('chatbox')} className={commonButtonClasses}>
+            <button onClick={() => { markMessagesAsRead(); setContent('chatbox'); }} className={`${commonButtonClasses} relative`}>
               Chat
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse -translate-y-1 translate-x-1">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           </>
         )}
@@ -53,8 +58,13 @@ const Sidebar = () => {
             <button onClick={() => setContent('patientcheck')} className={commonButtonClasses}>
               View Patients
             </button>
-            <button onClick={() => setContent('chatbox')} className={commonButtonClasses}>
+            <button onClick={() => { markMessagesAsRead(); setContent('chatbox'); }} className={`${commonButtonClasses} relative`}>
               Chat
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse -translate-y-1 translate-x-1">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           </>
         )}

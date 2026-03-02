@@ -30,6 +30,7 @@ class ChatMessage(db.Model):
     receiver = db.Column(db.String(50), nullable=False)
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now)
+    is_read = db.Column(db.Boolean, default=False)
 
 
 # User Model

@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useAppContext } from '../../context/AppContext';
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const { markMessagesAsRead } = useAppContext();
 
   const role = sessionStorage.getItem('role'); // 'doctor' or 'nurse'
   const sender = role;
   const receiver = role === 'doctor' ? 'nurse' : 'doctor';
 
   const messagesEndRef = useRef(null);
+
+  // Mark messages as read when chat is opened
+  useEffect(() => {
+    markMessagesAsRead();
+  }, [markMessagesAsRead]);
 
   useEffect(() => {
     const fetchMessages = async () => {
