@@ -56,9 +56,9 @@ const RegisterComponent = () => {
   };
 
   const roles = [
-    { value: "attendant", label: "Attendant", icon: "🏥" },
-    { value: "nurse", label: "Head of Nurse", icon: "👩‍⚕️" },
-    { value: "doctor", label: "Doctor", icon: "🩺" },
+    { value: "attendant", label: "Attendant" },
+    { value: "nurse", label: "Head of Nurse" },
+    { value: "doctor", label: "Doctor" },
   ];
 
   return (

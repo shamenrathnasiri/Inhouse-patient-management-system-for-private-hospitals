@@ -13,6 +13,7 @@ const AddPatient = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,6 +21,27 @@ const AddPatient = () => {
       ...prev,
       [name]: value,
     }));
+    // clear per-field error while typing
+    setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const validateField = (name, value) => {
+    let msg = '';
+    if (name === 'name') {
+      if (!value || value.trim().length < 2) msg = 'Please enter the full name (at least 2 characters).';
+    }
+    if (name === 'age') {
+      const n = Number(value);
+      if (!value) msg = 'Please enter age.';
+      else if (Number.isNaN(n) || n <= 0 || n > 130) msg = 'Enter a valid age.';
+    }
+    if ((name === 'dob' || name === 'admit_date') && value) {
+      // basic ISO date compare
+      const date = new Date(value);
+      if (isNaN(date.getTime())) msg = 'Enter a valid date.';
+    }
+    setFieldErrors((prev) => ({ ...prev, [name]: msg }));
+    return msg === '';
   };
 
   const handleSubmit = async (e) => {
@@ -28,6 +50,16 @@ const AddPatient = () => {
     setError('');
     setIsLoading(true);
 
+    // validate required fields
+    const validName = validateField('name', formData.name);
+    const validAge = validateField('age', formData.age);
+    const validDob = validateField('dob', formData.dob);
+    const validAdmit = validateField('admit_date', formData.admit_date);
+    if (!validName || !validAge || !validDob || !validAdmit) {
+      setIsLoading(false);
+      setError('Please fix the highlighted fields.');
+      return;
+    }
     try {
       const response = await axios.post('http://localhost:5000/register', formData);
       setMessage(response.data.message);
@@ -38,6 +70,8 @@ const AddPatient = () => {
         dob: '',
         admit_date: '',
       });
+
+      setFieldErrors({});
 
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -74,10 +108,15 @@ const AddPatient = () => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
+              onBlur={(e) => validateField(e.target.name, e.target.value)}
               className="input-field"
               placeholder="Enter patient full name"
+              autoFocus
+              aria-invalid={!!fieldErrors.name}
+              aria-describedby={fieldErrors.name ? 'name-error' : undefined}
               required
             />
+            {fieldErrors.name && <p id="name-error" className="text-xs text-red-400 mt-1">{fieldErrors.name}</p>}
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -91,10 +130,16 @@ const AddPatient = () => {
                 name="age"
                 value={formData.age}
                 onChange={handleInputChange}
+                  onBlur={(e) => validateField(e.target.name, e.target.value)}
                 className="input-field"
                 placeholder="Age"
+                  min="0"
+                  max="130"
+                  aria-invalid={!!fieldErrors.age}
+                  aria-describedby={fieldErrors.age ? 'age-error' : undefined}
                 required
               />
+                {fieldErrors.age && <p id="age-error" className="text-xs text-red-400 mt-1">{fieldErrors.age}</p>}
             </div>
 
             <div>
@@ -107,9 +152,12 @@ const AddPatient = () => {
                 name="dob"
                 value={formData.dob}
                 onChange={handleInputChange}
+                  onBlur={(e) => validateField(e.target.name, e.target.value)}
                 className="input-field"
                 required
               />
+                <p className="text-xs text-dark-400 mt-1">Format: YYYY-MM-DD</p>
+                {fieldErrors.dob && <p className="text-xs text-red-400 mt-1">{fieldErrors.dob}</p>}
             </div>
           </div>
 
@@ -123,14 +171,17 @@ const AddPatient = () => {
               name="admit_date"
               value={formData.admit_date}
               onChange={handleInputChange}
+              onBlur={(e) => validateField(e.target.name, e.target.value)}
               className="input-field"
               required
             />
+            <p className="text-xs text-dark-400 mt-1">Admission date cannot be in the future.</p>
+            {fieldErrors.admit_date && <p className="text-xs text-red-400 mt-1">{fieldErrors.admit_date}</p>}
           </div>
 
           {/* Messages */}
           {message && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-accent-500/10 border border-accent-500/20 animate-fade-in">
+            <div role="status" aria-live="polite" className="flex items-center gap-2 px-4 py-3 rounded-xl bg-accent-500/10 border border-accent-500/20 animate-fade-in">
               <svg className="w-4 h-4 text-accent-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -138,7 +189,7 @@ const AddPatient = () => {
             </div>
           )}
           {error && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-fade-in">
+            <div role="alert" className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-fade-in">
               <svg className="w-4 h-4 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
