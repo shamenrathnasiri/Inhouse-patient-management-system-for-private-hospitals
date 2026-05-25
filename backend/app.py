@@ -1,17 +1,15 @@
 from flask import Flask, request, jsonify, send_file, session
 from flask_cors import CORS
-from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-import io
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
-from database import db, Patient, User, Treatment, ChatMessage 
-import base64
-import mysql.connector
+from datetime import datetime, date
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
+import io
+import base64
+import mysql.connector
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import and_, or_
+from database import db, Patient, User, Treatment, ChatMessage
 
 
 # Auto-create the database if it doesn't exist
@@ -33,7 +31,7 @@ def ensure_database_exists():
 ensure_database_exists()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 app.config['SECRET_KEY'] = 'hospital'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost/hospital_db'
@@ -43,14 +41,6 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
-    # Ensure is_read column exists on chat_message table (migration for existing DBs)
-    try:
-        from sqlalchemy import text
-        db.session.execute(text("ALTER TABLE chat_message ADD COLUMN is_read BOOLEAN DEFAULT 0"))
-        db.session.commit()
-        print("Added 'is_read' column to chat_message table.")
-    except Exception:
-        db.session.rollback()  # Column likely already exists
     
 # DELETE a patient by ID
 @app.route('/patient/delete/<int:patient_id>', methods=['DELETE'])
@@ -67,6 +57,8 @@ def delete_patient(patient_id):
 @app.route('/chat/send', methods=['POST'])
 def send_message():
     data = request.json
+    if not data or not all(k in data for k in ('sender', 'receiver', 'message')):
+        return jsonify({"error": "Missing required fields: sender, receiver, message"}), 400
     new_msg = ChatMessage(
         sender=data['sender'],
         receiver=data['receiver'],
@@ -78,13 +70,17 @@ def send_message():
 
 @app.route('/chat/messages', methods=['GET'])
 def get_messages():
-    print("lsdjflkdsj")
     user1 = request.args.get('user1')
     user2 = request.args.get('user2')
 
+    if not user1 or not user2:
+        return jsonify({"error": "Both user1 and user2 parameters are required"}), 400
+
     messages = ChatMessage.query.filter(
-        ((ChatMessage.sender == user1) & (ChatMessage.receiver == user2)) |
-        ((ChatMessage.sender == user2) & (ChatMessage.receiver == user1))
+        or_(
+            and_(ChatMessage.sender == user1, ChatMessage.receiver == user2),
+            and_(ChatMessage.sender == user2, ChatMessage.receiver == user1)
+        )
     ).order_by(ChatMessage.timestamp).all()
 
     result = [
@@ -125,6 +121,8 @@ def mark_read():
 @app.route('/register', methods=['POST'])
 def register_patient():
     data = request.json
+    if not data or not all(k in data for k in ('name', 'age', 'dob', 'admit_date')):
+        return jsonify({"error": "Missing required fields: name, age, dob, admit_date"}), 400
     new_patient = Patient(
         name=data['name'],
         age=data['age'],
@@ -305,9 +303,14 @@ def generate_treatment_pdf(patient_id):
 @app.route('/register-user', methods=['POST'])
 def register_user():
     data = request.json
+    if not data:
+        return jsonify({"error": "Request body is required"}), 400
     username = data.get('username')
     password = data.get('password')
     role = data.get('role')
+
+    if not all([username, password, role]):
+        return jsonify({"error": "Missing required fields: username, password, role"}), 400
 
     existing_user = User.query.filter_by(username=username).first()
     if existing_user:
@@ -324,8 +327,13 @@ def register_user():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
+    if not data:
+        return jsonify({"message": "Request body is required"}), 400
     username = data.get("username")
     password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"message": "Username and password are required"}), 400
 
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password, password):
@@ -420,12 +428,14 @@ def get_patients_with_prescriptions():
 @app.route('/patients/add-treatment-no-prescription', methods=['POST'])
 def add_treatment_without_prescription():
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body is required'}), 400
     patient_id = data.get('patient_id')
     symptom = data.get('symptom')
     condition = data.get('condition')
-    date = data.get('date')
+    treatment_date = data.get('date')
 
-    if not all([patient_id, symptom, condition, date]):
+    if not all([patient_id, symptom, condition, treatment_date]):
         return jsonify({'error': 'Missing required fields'}), 400
 
     patient = Patient.query.get(patient_id)
@@ -436,8 +446,8 @@ def add_treatment_without_prescription():
         patient_id=patient_id,
         symptom=symptom,
         condition=condition,
-        date=date,
-        prescription=""  # Explicitly setting prescription as None
+        date=treatment_date,
+        prescription=""  # No prescription for this treatment
     )
 
     db.session.add(treatment)
