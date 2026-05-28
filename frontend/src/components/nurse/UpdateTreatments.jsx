@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
+import { FaNotesMedical, FaArrowLeft, FaPlusCircle } from 'react-icons/fa';
 
 const UpdateTreatments = () => {
   const { patientId, setContent } = useAppContext();
@@ -41,60 +42,85 @@ const UpdateTreatments = () => {
   };
 
   return (
-    <div className="add-treatment-container">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Add Treatment (No Prescription)</h2>
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/20">
+            <FaNotesMedical className="w-5 h-5 text-accent-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Add Treatment</h2>
+            <p className="text-sm text-dark-400">Record patient condition without prescription</p>
+          </div>
+        </div>
+
         <button
           onClick={() => setContent('viewpatients')}
-          className="px-3 py-1 text-sm font-medium text-white bg-gray-600 rounded hover:bg-gray-700"
+          className="btn-secondary flex items-center gap-2"
           aria-label="Back to All Patient Details"
         >
-          ← Back to All Patient Details
+          <FaArrowLeft className="w-3.5 h-3.5" />
+          Back to All Patients
         </button>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-semibold">Symptom</label>
-        <input
-          type="text"
-          value={symptom}
-          onChange={(e) => setSymptom(e.target.value)}
-          className="w-full p-2 mt-1 border rounded"
-          placeholder="Enter symptom"
-        />
+      {/* Form */}
+      <div className="glass-card p-6 max-w-2xl">
+        <div className="space-y-5">
+          <div>
+            <label className="form-label">Symptom</label>
+            <input
+              type="text"
+              value={symptom}
+              onChange={(e) => setSymptom(e.target.value)}
+              className="input-field"
+              placeholder="Enter symptom"
+            />
+          </div>
+
+          <div>
+            <label className="form-label">Condition</label>
+            <input
+              type="text"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              className="input-field"
+              placeholder="Enter condition"
+            />
+          </div>
+
+          <div>
+            <label className="form-label">Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input-field"
+            />
+          </div>
+
+          <button
+            onClick={handleAddTreatment}
+            className={`btn-accent flex items-center gap-2 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={loading}
+          >
+            <FaPlusCircle className="w-4 h-4" />
+            {loading ? 'Adding...' : 'Add Treatment'}
+          </button>
+
+          {successMessage && (
+            <div className="p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+              <p className="text-sm text-accent-400">{successMessage}</p>
+            </div>
+          )}
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400">{errorMessage}</p>
+            </div>
+          )}
+        </div>
       </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-semibold">Condition</label>
-        <input
-          type="text"
-          value={condition}
-          onChange={(e) => setCondition(e.target.value)}
-          className="w-full p-2 mt-1 border rounded"
-          placeholder="Enter condition"
-        />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-semibold">Date</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="w-full p-2 mt-1 border rounded"
-        />
-      </div>
-
-      <button
-        onClick={handleAddTreatment}
-        className="px-4 py-2 text-white bg-green-600 rounded"
-        disabled={loading}
-      >
-        {loading ? 'Adding...' : 'Add Treatment'}
-      </button>
-
-      {successMessage && <p className="mt-4 text-green-600">{successMessage}</p>}
-      {errorMessage && <p className="mt-4 text-red-600">{errorMessage}</p>}
     </div>
   );
 };

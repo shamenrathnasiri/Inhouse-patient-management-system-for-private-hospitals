@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
+import { FaStethoscope, FaArrowLeft, FaFileAlt, FaSave, FaTimes, FaPrescriptionBottleAlt } from 'react-icons/fa';
 
 const ViewTreatments = () => {
   const { patientId, setContent } = useAppContext();
@@ -49,113 +50,139 @@ const ViewTreatments = () => {
   };
 
   return (
-    <div className="p-6 mx-auto bg-white shadow-lg rounded-xl max-w-7xl">
-      <h2 className="mb-6 text-3xl font-extrabold text-center text-blue-700">
-        🩺 Patient Treatment History
-      </h2>
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/20">
+            <FaStethoscope className="w-5 h-5 text-accent-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Patient Treatment History</h2>
+            <p className="text-sm text-dark-400">{treatments.length} treatment{treatments.length !== 1 ? 's' : ''} recorded</p>
+          </div>
+        </div>
+      </div>
 
       {loading ? (
-        <p className="text-center text-gray-500">Loading...</p>
+        <div className="flex items-center justify-center py-12">
+          <svg className="w-8 h-8 text-primary-400 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="ml-3 text-dark-400">Loading treatments...</span>
+        </div>
       ) : errorMsg ? (
-        <p className="text-center text-red-500">{errorMsg}</p>
+        <div className="glass-card p-12 text-center">
+          <FaStethoscope className="w-12 h-12 mx-auto mb-4 text-dark-700" />
+          <p className="text-red-400">{errorMsg}</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border border-gray-300 rounded-lg shadow-sm">
-            <thead className="text-white bg-blue-600">
-              <tr>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Symptom</th>
-                <th className="px-4 py-3">Condition</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Prescription</th>
-                <th className="px-4 py-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {treatments.map((treatment, index) => (
-                <tr key={treatment.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium">{treatment.id}</td>
-                  <td className="px-4 py-2">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
-                      {treatment.symptom}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold text-purple-800 bg-purple-100 rounded-full">
-                      {treatment.condition}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2">{treatment.date}</td>
-                  <td className="px-4 py-2 text-sm">
-                    {treatment.prescription ? (
-                      <span className="inline-block px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-lg">
-                        {treatment.prescription}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">N/A</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    {!treatment.prescription ? (
-                      editingId === treatment.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            rows={2}
-                            value={prescriptionInput}
-                            onChange={(e) => setPrescriptionInput(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            placeholder="Enter prescription"
-                          />
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleSubmitPrescription(treatment.id)}
-                              className="px-3 py-1 text-sm text-white transition bg-green-600 rounded-md hover:bg-green-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingId(null);
-                                setPrescriptionInput('');
-                              }}
-                              className="px-3 py-1 text-sm text-white transition bg-gray-500 rounded-md hover:bg-gray-600"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setEditingId(treatment.id)}
-                          className="px-3 py-1 text-sm text-white transition bg-blue-500 rounded-md hover:bg-blue-600"
-                        >
-                          Add Prescription
-                        </button>
-                      )
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
+        <div className="glass-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="table-premium">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Symptom</th>
+                  <th>Condition</th>
+                  <th>Date</th>
+                  <th>Prescription</th>
+                  <th className="text-center">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {treatments.map((treatment, index) => (
+                  <tr key={treatment.id} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
+                    <td className="font-medium text-white">{treatment.id}</td>
+                    <td>
+                      <span className="badge badge-info">
+                        {treatment.symptom}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge badge-purple">
+                        {treatment.condition}
+                      </span>
+                    </td>
+                    <td>{treatment.date}</td>
+                    <td>
+                      {treatment.prescription ? (
+                        <span className="badge badge-success">
+                          {treatment.prescription}
+                        </span>
+                      ) : (
+                        <span className="text-dark-500">N/A</span>
+                      )}
+                    </td>
+                    <td className="text-center">
+                      {!treatment.prescription ? (
+                        editingId === treatment.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              rows={2}
+                              value={prescriptionInput}
+                              onChange={(e) => setPrescriptionInput(e.target.value)}
+                              className="input-field text-sm"
+                              placeholder="Enter prescription"
+                            />
+                            <div className="flex justify-center gap-2">
+                              <button
+                                onClick={() => handleSubmitPrescription(treatment.id)}
+                                className="btn-accent flex items-center gap-1.5 px-3 py-1.5 text-xs"
+                              >
+                                <FaSave className="w-3 h-3" />
+                                Save
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingId(null);
+                                  setPrescriptionInput('');
+                                }}
+                                className="btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs"
+                              >
+                                <FaTimes className="w-3 h-3" />
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setEditingId(treatment.id)}
+                            className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs mx-auto"
+                          >
+                            <FaPrescriptionBottleAlt className="w-3 h-3" />
+                            Add Prescription
+                          </button>
+                        )
+                      ) : (
+                        <span className="text-dark-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-4 mt-8 sm:flex-row sm:justify-center">
+      {/* Footer Actions */}
+      <div className="flex flex-col gap-3 mt-8 sm:flex-row sm:justify-center">
         <button
           onClick={() => setContent("discharge")}
-          className="w-full px-6 py-3 font-semibold text-white transition bg-blue-700 rounded-lg sm:w-auto hover:bg-blue-800"
+          className="btn-primary flex items-center justify-center gap-2"
         >
-           Discharge and Generate Medical Report
+          <FaFileAlt className="w-4 h-4" />
+          Discharge and Generate Medical Report
         </button>
 
         <button
           onClick={() => setContent("patientcheck")}
-          className="w-full px-6 py-3 font-semibold text-gray-800 transition bg-gray-200 rounded-lg shadow-md sm:w-auto hover:bg-gray-300"
+          className="btn-secondary flex items-center justify-center gap-2"
         >
-           Back
+          <FaArrowLeft className="w-4 h-4" />
+          Back
         </button>
       </div>
     </div>

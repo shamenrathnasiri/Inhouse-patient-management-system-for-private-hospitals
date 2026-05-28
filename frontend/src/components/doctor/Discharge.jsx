@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 import SignaturePad from './SignaturePad';
+import { FaUserMd, FaArrowLeft, FaCheckCircle, FaTimes, FaNotesMedical } from 'react-icons/fa';
 
 const Discharge = () => {
   const { patientId, signature, setSigned, signed, setContent } = useAppContext();
@@ -54,106 +55,158 @@ const Discharge = () => {
     setSigned(false);
   };
 
-  if (loading) return <p className="text-center text-gray-600">Loading...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-12 animate-fade-in">
+      <svg className="w-8 h-8 text-primary-400 animate-spin" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      <span className="ml-3 text-dark-400">Loading patient data...</span>
+    </div>
+  );
+
+  if (error) return (
+    <div className="glass-card p-12 text-center animate-fade-in">
+      <p className="text-red-400">{error}</p>
+    </div>
+  );
+
   if (!patient) return null;
 
   return (
-    <div className="max-w-4xl p-8 mx-auto space-y-6 shadow-xl bg-gradient-to-r from-blue-50 to-white rounded-xl">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20">
+            <FaUserMd className="w-5 h-5 text-primary-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Patient Discharge Details</h2>
+            <p className="text-sm text-dark-400">Review and discharge patient</p>
+          </div>
+        </div>
         <button
           onClick={() => { setContent('patientcheck'); setSigned(false); }}
-          className="px-4 py-2 text-sm font-semibold text-white bg-gray-600 rounded hover:bg-gray-700"
+          className="btn-secondary flex items-center gap-2"
         >
-          Back to All Patient Details
+          <FaArrowLeft className="w-3.5 h-3.5" />
+          Back to All Patients
         </button>
-        <h2 className="text-3xl font-bold text-center text-blue-800 flex-1">Patient Discharge Details</h2>
       </div>
 
-      {/* Patient Info */}
-      <table className="w-full text-sm bg-white border border-gray-300 shadow-sm rounded-xl">
-        <tbody>
-          <tr className="bg-gray-100">
-            <td className="px-6 py-3 font-semibold text-gray-600">Name</td>
-            <td className="px-6 py-3 text-gray-800">{patient.name}</td>
-          </tr>
-          <tr className="border-t">
-            <td className="px-6 py-3 font-semibold text-gray-600">Age</td>
-            <td className="px-6 py-3 text-gray-800">{patient.age}</td>
-          </tr>
-          <tr className="bg-gray-100">
-            <td className="px-6 py-3 font-semibold text-gray-600">Date of Birth</td>
-            <td className="px-6 py-3 text-gray-800">{patient.dob}</td>
-          </tr>
-          <tr className="border-t">
-            <td className="px-6 py-3 font-semibold text-gray-600">Admit Date</td>
-            <td className="px-6 py-3 text-gray-800">{patient.admit_date}</td>
-          </tr>
-          <tr className="bg-gray-100">
-            <td className="px-6 py-3 font-semibold text-gray-600">Discharge Date</td>
-            <td className="px-6 py-3 text-gray-800">{patient.discharge_date || 'Not yet discharged'}</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* Patient Info Grid */}
+      <div className="glass-card p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Patient Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="glass-card-light p-4">
+            <p className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-1">Name</p>
+            <p className="text-white font-medium">{patient.name}</p>
+          </div>
+          <div className="glass-card-light p-4">
+            <p className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-1">Age</p>
+            <p className="text-white font-medium">{patient.age}</p>
+          </div>
+          <div className="glass-card-light p-4">
+            <p className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-1">Date of Birth</p>
+            <p className="text-white font-medium">{patient.dob}</p>
+          </div>
+          <div className="glass-card-light p-4">
+            <p className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-1">Admit Date</p>
+            <p className="text-white font-medium">{patient.admit_date}</p>
+          </div>
+          <div className="glass-card-light p-4 md:col-span-2">
+            <p className="text-xs font-medium text-dark-500 uppercase tracking-wider mb-1">Discharge Date</p>
+            <p className="text-white font-medium">
+              {patient.discharge_date ? (
+                <span className="badge badge-success">{patient.discharge_date}</span>
+              ) : (
+                <span className="badge badge-warning">Not yet discharged</span>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
 
-      {/* Treatments */}
-      <div>
-        <h3 className="mb-4 text-2xl font-bold text-blue-600">Treatment History</h3>
+      {/* Treatment History */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <FaNotesMedical className="w-5 h-5 text-accent-400" />
+          <h3 className="text-lg font-semibold text-white">Treatment History</h3>
+        </div>
+
         {patient.treatments.length === 0 ? (
-          <p className="text-gray-500">No treatments recorded.</p>
+          <div className="glass-card p-8 text-center">
+            <p className="text-dark-400">No treatments recorded.</p>
+          </div>
         ) : (
-          <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
-            <table className="w-full text-sm text-gray-600 table-auto">
-              <thead className="text-blue-900 bg-blue-100">
-                <tr>
-                  <th className="px-4 py-2 border">Date</th>
-                  <th className="px-4 py-2 border">Symptom</th>
-                  <th className="px-4 py-2 border">Condition</th>
-                  <th className="px-4 py-2 border">Prescription</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patient.treatments.map((t, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-2 border">{t.date}</td>
-                    <td className="px-4 py-2 border">{t.symptom}</td>
-                    <td className="px-4 py-2 border">{t.condition}</td>
-                    <td className="px-4 py-2 border">{t.prescription}</td>
+          <div className="glass-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="table-premium">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Symptom</th>
+                    <th>Condition</th>
+                    <th>Prescription</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {patient.treatments.map((t, index) => (
+                    <tr key={index} className="animate-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
+                      <td>{t.date}</td>
+                      <td><span className="badge badge-info">{t.symptom}</span></td>
+                      <td><span className="badge badge-purple">{t.condition}</span></td>
+                      <td>
+                        {t.prescription ? (
+                          <span className="badge badge-success">{t.prescription}</span>
+                        ) : (
+                          <span className="text-dark-500">N/A</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* Signature input */}
-        <div className={'mt-8'}>
-        <SignaturePad /> </div>
+        <div className="mt-8">
+          <SignaturePad />
+        </div>
       </div>
 
       {/* Discharge Button */}
       {signed && (
-        <div className="flex justify-end mt-6 space-x-4">
+        <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={handleDischarge}
-            className={`px-6 py-2 text-lg font-semibold text-white rounded-lg shadow-md transition duration-300 ease-in-out transform ${
-              discharging ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 hover:scale-105'
+            className={`flex items-center gap-2 ${
+              discharging ? 'btn-secondary cursor-not-allowed opacity-60' : 'btn-accent'
             }`}
             disabled={discharging}
           >
+            <FaCheckCircle className="w-4 h-4" />
             {discharging ? 'Discharging...' : 'Discharge & Save'}
           </button>
 
           <button
             onClick={cancelbutton}
-            className="px-6 py-2 text-lg font-semibold text-gray-700 transition duration-300 ease-in-out bg-gray-200 rounded-lg shadow-md hover:bg-gray-300 hover:scale-105"
+            className="btn-secondary flex items-center gap-2"
           >
+            <FaTimes className="w-4 h-4" />
             Cancel
           </button>
         </div>
       )}
 
-      {successMsg && <p className="mt-4 text-center text-green-600">{successMsg}</p>}
+      {successMsg && (
+        <div className="glass-card p-4 text-center">
+          <p className="text-accent-400 font-medium">{successMsg}</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { FaUsers, FaSearch, FaFilePdf, FaFileExcel, FaTimes, FaEye, FaPlusCircle, FaTrashAlt } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -314,185 +315,200 @@ const ListPatient = () => {
   });
 
   return (
-    <div className="p-6 bg-white rounded shadow-md">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-cyan-800">All Patient Details</h2>
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20">
+            <FaUsers className="w-5 h-5 text-primary-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">All Patient Details</h2>
+            <p className="text-sm text-dark-400">{filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} found</p>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <button
             onClick={exportToPDF}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded shadow-sm"
+            className="btn-danger flex items-center gap-2 px-4 py-2 text-sm"
             title="Export selected patients to PDF"
+            id="export-pdf-btn"
           >
-            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+            <FaFilePdf className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export PDF</span>
           </button>
           <button
             onClick={exportByDateRangeXLSX}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded shadow-sm"
-            title="Export selected date range to Excel (xlsx) - exports all if no range selected"
+            className="btn-accent flex items-center gap-2 px-4 py-2 text-sm"
+            title="Export selected date range to Excel (xlsx)"
+            id="export-xlsx-btn"
           >
-            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l4-4m-4 4-4-4M21 21H3" />
-            </svg>
+            <FaFileExcel className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Export Excel</span>
           </button>
         </div>
       </div>
 
-      {loading && <p className="text-gray-600">Loading patients...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {!loading && patients.length === 0 && (
-        <p className="text-gray-600">No patient details available.</p>
-      )}
-
       {/* Filters */}
-      {!loading && patients.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-3 items-center">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => document.getElementById('patient-search')?.focus()}
-              className="absolute left-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1"
-              aria-label="Focus search"
-            >
-              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1116.65 16.65z" />
-              </svg>
-            </button>
+      <div className="glass-card p-4 mb-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          {/* Search */}
+          <div className="relative flex-1 max-w-sm">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-500 w-3.5 h-3.5" />
             <input
               id="patient-search"
-              type="text"
+              type="search"
+              placeholder="Search by name..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              placeholder="Search by name"
-              className="px-3 py-2 pl-10 border rounded w-48 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+              className="input-field pl-10 py-2.5 text-sm"
             />
+            {searchName && (
+              <button
+                type="button"
+                onClick={() => setSearchName('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-500 hover:text-dark-300 transition-colors"
+                aria-label="Clear search"
+              >
+                <FaTimes className="w-3 h-3" />
+              </button>
+            )}
           </div>
-          <label className="text-sm text-gray-600">from</label>
-          <div className="relative">
-            <svg className="w-5 h-5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+
+          {/* Date Range */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-dark-500">From</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-2 py-1 pl-9 border rounded focus:outline-none focus:ring-2 focus:ring-cyan-200"
+              className="input-field py-2 px-3 text-sm w-auto"
             />
           </div>
-          <label className="text-sm text-gray-600">to</label>
-          <div className="relative">
-            <svg className="w-5 h-5 absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-dark-500">To</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-2 py-1 pl-9 border rounded focus:outline-none focus:ring-2 focus:ring-cyan-200"
+              className="input-field py-2 px-3 text-sm w-auto"
             />
           </div>
+
           <button
             onClick={() => {
               setSearchName('');
               setStartDate('');
               setEndDate('');
             }}
-            className="px-3 py-1 text-white bg-gray-600 rounded flex items-center gap-2 hover:bg-gray-700"
+            className="btn-secondary px-4 py-2 text-sm"
           >
-            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
             Clear
           </button>
         </div>
+      </div>
+
+      {/* Loading / Error */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <svg className="w-8 h-8 text-primary-400 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="ml-3 text-dark-400">Loading patients...</span>
+        </div>
+      )}
+      {error && <p className="py-4 text-center text-red-400">{error}</p>}
+
+      {!loading && patients.length === 0 && (
+        <div className="glass-card p-12 text-center">
+          <FaUsers className="w-12 h-12 mx-auto mb-4 text-dark-700" />
+          <p className="text-dark-400">No patient details available.</p>
+        </div>
       )}
 
+      {/* Table */}
       {!loading && patients.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse shadow-sm table-auto">
-            <thead>
-              <tr className="bg-blue-100 text-cyan-800">
-                <th className="p-3 border border-blue-200">Patient Name</th>
-                <th className="p-3 border border-blue-200">Age</th>
-                <th className="p-3 border border-blue-200">Date of Birth</th>
-                <th className="p-3 border border-blue-200">Admission Date</th>
-                <th className="p-3 border border-blue-200">Status</th>
-                <th className="p-3 border border-blue-200">View Condition</th>
-                <th className="p-3 border border-blue-200">Medical Report</th>
-                <th className="p-3 border border-blue-200">Remove</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPatients.length === 0 ? (
+        <div className="glass-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="table-premium">
+              <thead>
                 <tr>
-                  <td colSpan={8} className="p-4 text-center text-gray-600">
-                    No patients match filters.
-                  </td>
+                  <th>Patient Name</th>
+                  <th>Age</th>
+                  <th>Date of Birth</th>
+                  <th>Admission Date</th>
+                  <th>Status</th>
+                  <th>View Condition</th>
+                  <th>Medical Report</th>
+                  <th>Remove</th>
                 </tr>
-              ) : (
-                filteredPatients.map((patient) => {
-                  const dischargeDate =
-                    patient.discharge_date || patient.discharge || patient.dischargeDate || patient.discharge_on || patient.dischargeOn;
-                  return (
-                    <tr key={patient.id} className="text-center transition-colors even:bg-gray-50">
-                      <td className="p-3 border">{patient.name}</td>
-                      <td className="p-3 border">{patient.age}</td>
-                      <td className="p-3 border">{patient.dob}</td>
-                      <td className="p-3 border">{patient.admit_date}</td>
-                      <td className="p-3 border">
-                        {dischargeDate ? (
-                          <span className="px-2 py-1 text-sm font-semibold text-green-800 bg-green-100 rounded">
-                            Discharged: {dischargeDate}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-sm font-semibold text-yellow-800 bg-yellow-100 rounded">
-                            Admitted
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 border">
-                        <button
-                          onClick={() => handleTreatmentsClick(patient.id)}
-                          className="px-3 py-1 text-white transition-transform duration-200 bg-teal-600 rounded shadow-sm hover:scale-110 hover:bg-cyan-700 flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span className="hidden sm:inline">Patient Condition</span>
-                        </button>
-                      </td>
-                      <td className="p-3 border">
-                        <button
-                          onClick={() => handleGenerate(patient.id)}
-                          className="px-3 py-1 text-white transition-transform duration-200 bg-green-600 rounded shadow-sm hover:bg-green-700 hover:scale-110 flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8m4-4H8" />
-                          </svg>
-                          <span className="hidden sm:inline">Generate</span>
-                        </button>
-                      </td>
-                      <td className="p-3 border">
-                        <button
-                          onClick={() => handleDelete(patient.id)}
-                          className="px-3 py-1 text-white transition-transform duration-200 bg-red-600 rounded shadow-sm hover:bg-red-700 hover:scale-110 flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
-                          </svg>
-                          <span className="hidden sm:inline">Delete</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredPatients.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center text-dark-500">
+                      No patients match filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPatients.map((patient, idx) => {
+                    const dischargeDate =
+                      patient.discharge_date || patient.discharge || patient.dischargeDate || patient.discharge_on || patient.dischargeOn;
+                    return (
+                      <tr key={patient.id} className="animate-fade-in" style={{ animationDelay: `${idx * 30}ms` }}>
+                        <td className="font-medium text-white">{patient.name}</td>
+                        <td>{patient.age}</td>
+                        <td>{patient.dob}</td>
+                        <td>
+                          <span className="badge badge-info">{patient.admit_date}</span>
+                        </td>
+                        <td>
+                          {dischargeDate ? (
+                            <span className="badge badge-success">
+                              Discharged: {dischargeDate}
+                            </span>
+                          ) : (
+                            <span className="badge badge-warning">
+                              Admitted
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleTreatmentsClick(patient.id)}
+                            className="btn-primary flex items-center gap-2 px-3 py-1.5 text-xs"
+                          >
+                            <FaEye className="w-3 h-3" />
+                            <span className="hidden sm:inline">Patient Condition</span>
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleGenerate(patient.id)}
+                            className="btn-accent flex items-center gap-2 px-3 py-1.5 text-xs"
+                          >
+                            <FaPlusCircle className="w-3 h-3" />
+                            <span className="hidden sm:inline">Generate</span>
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleDelete(patient.id)}
+                            className="btn-danger flex items-center gap-2 px-3 py-1.5 text-xs"
+                          >
+                            <FaTrashAlt className="w-3 h-3" />
+                            <span className="hidden sm:inline">Delete</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

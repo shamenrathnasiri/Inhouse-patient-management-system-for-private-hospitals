@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
+import { FaExclamationTriangle, FaTrashAlt, FaTimes } from 'react-icons/fa';
 
 const DeletePatient = () => {
     const { patientId, setContent} = useAppContext();
@@ -31,27 +32,44 @@ const DeletePatient = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600 bg-opacity-50">
-      <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="mb-4 text-lg font-semibold">Are you sure?</h2>
-        <p className="mb-4">This action will permanently delete the patient and all associated treatments.</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="glass-card w-full max-w-sm p-6 mx-4 animate-fade-in">
+        {/* Warning icon */}
+        <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10 border border-red-500/20">
+          <FaExclamationTriangle className="w-6 h-6 text-red-400" />
+        </div>
 
-        {error && <p className="mb-4 text-red-500">{error}</p>}
-        {successMessage && <p className="mb-4 text-green-500">{successMessage}</p>}
+        <h2 className="mb-2 text-lg font-bold text-white text-center">Are you sure?</h2>
+        <p className="mb-6 text-sm text-dark-300 text-center">
+          This action will permanently delete the patient and all associated treatments. This cannot be undone.
+        </p>
 
-        <div className="flex justify-between">
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
+        {successMessage && (
+          <div className="mb-4 p-3 rounded-xl bg-accent-500/10 border border-accent-500/20">
+            <p className="text-sm text-accent-400">{successMessage}</p>
+          </div>
+        )}
+
+        <div className="flex gap-3">
           <button
             onClick={handleDelete}
             disabled={loading}
-            className={`px-4 py-2 bg-red-500 text-white rounded-md ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`btn-danger flex-1 flex items-center justify-center gap-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
+            <FaTrashAlt className="w-3.5 h-3.5" />
             {loading ? 'Deleting...' : 'Yes, Delete'}
           </button>
 
           <button
             onClick={() => setContent('patientcheck')}
-            className="px-4 py-2 text-black bg-gray-300 rounded-md"
+            className="btn-secondary flex-1 flex items-center justify-center gap-2"
           >
+            <FaTimes className="w-3.5 h-3.5" />
             Cancel
           </button>
         </div>
