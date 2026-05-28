@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { useAppContext } from '../../context/AppContext';
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { useAppContext } from "../../context/AppContext";
+import { FaComments, FaPaperPlane } from "react-icons/fa";
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const { markMessagesAsRead } = useAppContext();
 
-  const role = sessionStorage.getItem('role'); // 'doctor' or 'nurse'
+  const role = sessionStorage.getItem("role"); // 'doctor' or 'nurse'
   const sender = role;
-  const receiver = role === 'doctor' ? 'nurse' : 'doctor';
+  const receiver = role === "doctor" ? "nurse" : "doctor";
 
   const messagesEndRef = useRef(null);
 
@@ -22,7 +23,9 @@ const ChatBox = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/chat/messages?user1=${receiver}&user2=${sender}`);
+        const response = await axios.get(
+          `http://localhost:5000/chat/messages?user1=${receiver}&user2=${sender}`,
+        );
         setMessages(response.data);
         setLoading(false);
       } catch (error) {
@@ -38,14 +41,14 @@ const ChatBox = () => {
 
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
   const handleSendMessage = async () => {
     if (newMessage.trim()) {
       try {
-        await axios.post('http://localhost:5000/chat/send', {
+        await axios.post("http://localhost:5000/chat/send", {
           sender,
           receiver,
           message: newMessage,
@@ -53,14 +56,20 @@ const ChatBox = () => {
 
         // Format timestamp to match backend format: 'YYYY-MM-DD HH:MM:SS'
         const now = new Date();
-        const formattedTimestamp = now.getFullYear() + '-' +
-          String(now.getMonth() + 1).padStart(2, '0') + '-' +
-          String(now.getDate()).padStart(2, '0') + ' ' +
-          String(now.getHours()).padStart(2, '0') + ':' +
-          String(now.getMinutes()).padStart(2, '0') + ':' +
-          String(now.getSeconds()).padStart(2, '0');
+        const formattedTimestamp =
+          now.getFullYear() +
+          "-" +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(now.getDate()).padStart(2, "0") +
+          " " +
+          String(now.getHours()).padStart(2, "0") +
+          ":" +
+          String(now.getMinutes()).padStart(2, "0") +
+          ":" +
+          String(now.getSeconds()).padStart(2, "0");
 
-        setMessages(prevMessages => [
+        setMessages((prevMessages) => [
           ...prevMessages,
           {
             sender,
@@ -70,50 +79,111 @@ const ChatBox = () => {
             id: Date.now(),
           },
         ]);
-        setNewMessage('');
+        setNewMessage("");
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error("Error sending message:", error);
       }
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
   if (loading) {
-    return <div className="text-center text-gray-500">Loading messages...</div>;
+    return (
+      <div className="flex items-center justify-center py-12 animate-fade-in">
+        <svg
+          className="w-8 h-8 text-primary-400 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+        <span className="ml-3 text-dark-400">Loading messages...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col h-full max-w-3xl mx-auto bg-white border rounded-lg shadow-2xl">
+    <div className="flex flex-col h-[calc(100vh-12rem)] max-w-3xl mx-auto glass-card overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 text-white rounded-t-lg shadow-md bg-gradient-to-r from-teal-600 to-cyan-800">
-        <h3 className="text-xl font-bold tracking-wide">
-          Chat with {receiver.charAt(0).toUpperCase() + receiver.slice(1)}
-        </h3>
+      <div
+        className="flex items-center gap-3 p-4 border-b border-dark-800/50"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(20, 87, 225, 0.15), rgba(51, 140, 255, 0.08))",
+        }}
+      >
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20">
+          <FaComments className="w-4 h-4 text-primary-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-white tracking-wide">
+            Chat with {receiver.charAt(0).toUpperCase() + receiver.slice(1)}
+          </h3>
+          <p className="text-xs text-dark-400">Real-time messaging</p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-accent-400 animate-pulse" />
+          <span className="text-xs text-accent-400 font-medium">Online</span>
+        </div>
       </div>
 
       {/* Chat body */}
-      <div className="flex-1 p-4 space-y-3 overflow-y-auto bg-cyan-50">
+      <div
+        className="flex-1 p-4 space-y-3 overflow-y-auto"
+        style={{ background: "rgba(19, 19, 31, 0.5)" }}
+      >
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <FaComments className="w-12 h-12 mx-auto mb-3 text-dark-700" />
+              <p className="text-dark-500">
+                No messages yet. Start the conversation!
+              </p>
+            </div>
+          </div>
+        )}
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.sender === sender ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-            <div className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm 
-              ${msg.sender === sender 
-                ? 'bg-cyan-600 text-white rounded-br-none' 
-                : 'bg-teal-600 text-white rounded-bl-none'}`}>
-              <p className="whitespace-pre-line">{msg.message}</p>
-              <div className="mt-1 text-xs text-right text-gray-300">
+          <div
+            key={msg.id}
+            className={`flex ${msg.sender === sender ? "justify-end" : "justify-start"} animate-fade-in`}
+          >
+            <div
+              className={`max-w-xs px-4 py-2.5 rounded-2xl shadow-lg transition-all duration-200 
+              ${
+                msg.sender === sender
+                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-br-md"
+                  : "glass-card-light text-dark-100 rounded-bl-md border border-dark-700/30"
+              }`}
+            >
+              <p className="whitespace-pre-line text-sm">{msg.message}</p>
+              <div
+                className={`mt-1 text-xs text-right ${msg.sender === sender ? "text-primary-200/60" : "text-dark-500"}`}
+              >
                 {(() => {
                   // Parse timestamp format 'YYYY-MM-DD HH:MM:SS' from backend
-                  const timestamp = msg.timestamp.replace(' ', 'T');
+                  const timestamp = msg.timestamp.replace(" ", "T");
                   const date = new Date(timestamp);
-                  return date.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
+                  return date.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
                     hour12: true,
                   });
                 })()}
@@ -125,20 +195,25 @@ const ChatBox = () => {
       </div>
 
       {/* Input area */}
-      <div className="flex items-center p-4 bg-gray-100 border-t rounded-b-lg">
+      <div
+        className="flex items-center gap-3 p-4 border-t border-dark-800/50"
+        style={{ background: "rgba(30, 30, 46, 0.8)" }}
+      >
         <textarea
           rows={1}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full p-3 bg-white border border-gray-300 shadow-sm resize-none rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          className="input-field resize-none py-2.5 text-sm"
           placeholder="Type your message here... (Press Enter to send)"
         />
         <button
           onClick={handleSendMessage}
-          className="px-5 py-2 ml-4 font-medium text-white transition-all duration-200 shadow-md bg-cyan-600 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="btn-primary px-4 py-2.5 flex items-center gap-2"
+          disabled={!newMessage.trim()}
         >
-          Send
+          <FaPaperPlane className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Send</span>
         </button>
       </div>
     </div>
