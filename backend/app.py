@@ -10,6 +10,12 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import and_, or_
 from database import db, Patient, User, Treatment, ChatMessage
+import google.generativeai as genai
+
+# Configure Google Gemini AI
+# Replace with your actual API key from https://aistudio.google.com/apikey
+GEMINI_API_KEY = 'AQ.Ab8RN6LnNtLprR9N5hm5LS7PnpXFqJkNzJPaKOYv3RbNquEHzA'
+genai.configure(api_key=GEMINI_API_KEY)
 
 
 # Auto-create the database if it doesn't exist
@@ -180,6 +186,45 @@ def generate_pdf(id):
             y -= 15
             p.drawString(140, y, f"Prescription: {t.prescription}")
             y -= 25
+
+    # AI-Generated Medical Report
+    if patient.ai_report:
+        if y < 150:
+            p.showPage()
+            y = height - 50
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(100, y, "AI-Generated Medical Summary:")
+        p.line(100, y - 5, 500, y - 5)
+        y -= 25
+        p.setFont("Helvetica", 9)
+        
+        # Word-wrap the AI report text
+        for line in patient.ai_report.split('\n'):
+            # Wrap long lines
+            words = line.split()
+            current_line = ""
+            for word in words:
+                test_line = current_line + " " + word if current_line else word
+                if p.stringWidth(test_line, "Helvetica", 9) < 400:
+                    current_line = test_line
+                else:
+                    if y < 60:
+                        p.showPage()
+                        y = height - 50
+                        p.setFont("Helvetica", 9)
+                    p.drawString(100, y, current_line)
+                    y -= 13
+                    current_line = word
+            if current_line:
+                if y < 60:
+                    p.showPage()
+                    y = height - 50
+                    p.setFont("Helvetica", 9)
+                p.drawString(100, y, current_line)
+                y -= 13
+            if not words:  # empty line
+                y -= 8
+        y -= 10
 
     # Doctor's Signature
     p.setFont("Helvetica-Bold", 12)
@@ -382,10 +427,13 @@ def discharge_patient(id):
     data = request.json
     discharge_date = data.get('discharge_date')
     doctor_signature = data.get('doctor_signature')
+    ai_report = data.get('ai_report')  # AI-generated medical report
 
     patient = Patient.query.get_or_404(id)
     patient.discharge_date = discharge_date
     patient.doctor_signature = doctor_signature  # <--- Store it
+    if ai_report:
+        patient.ai_report = ai_report  # Save AI report
 
     db.session.commit()
     return jsonify({"message": "Patient discharged successfully."}), 200
@@ -487,6 +535,70 @@ def add_prescription(id):
     treatment.prescription = prescription
     db.session.commit()
     return jsonify({'message': 'Prescription added successfully'})
+
+
+# ===================== AI REPORT GENERATION =====================
+@app.route('/ai/generate-report/<int:patient_id>', methods=['POST'])
+def generate_ai_report(patient_id):
+    """Generate an AI medical report using Google Gemini based on patient data."""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        treatments = Treatment.query.filter_by(patient_id=patient_id).order_by(Treatment.date).all()
+
+        # Build treatment history text
+        treatment_lines = []
+        for t in treatments:
+            treatment_lines.append(
+                f"  - Date: {t.date}, Symptom: {t.symptom}, "
+                f"Condition: {t.condition}, Prescription: {t.prescription or 'N/A'}"
+            )
+        treatment_text = '\n'.join(treatment_lines) if treatment_lines else 'No treatments recorded.'
+
+        # Construct the AI prompt
+        prompt = f"""You are a medical report assistant for City General Hospital. 
+Based on the following patient data, generate a professional medical summary report.
+The report should be clear, concise, and suitable for a medical discharge document.
+
+=== PATIENT INFORMATION ===
+Name: {patient.name}
+Age: {patient.age}
+Date of Birth: {patient.dob}
+Admission Date: {patient.admit_date}
+Discharge Date: {patient.discharge_date if patient.discharge_date and patient.discharge_date != 'N/A' else 'Pending'}
+
+=== TREATMENT HISTORY ===
+{treatment_text}
+
+=== INSTRUCTIONS ===
+Generate a structured medical report with the following sections:
+1. **Patient Summary** - Brief overview of the patient
+2. **Clinical History** - Summary of symptoms and conditions observed
+3. **Diagnosis** - Primary and secondary diagnoses based on conditions
+4. **Treatment Administered** - Summary of treatments and prescriptions given
+5. **Discharge Recommendations** - Follow-up care, medications to continue, and lifestyle advice
+
+Keep the language professional and medical. Do not include any disclaimers about AI. 
+Write as if this is an official hospital report.
+Do not use markdown formatting - use plain text only."""
+
+        # Call Google Gemini API
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+
+        ai_report = response.text
+
+        return jsonify({
+            'success': True,
+            'report': ai_report,
+            'patient_name': patient.name
+        }), 200
+
+    except Exception as e:
+        print(f"AI Report Generation Error: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to generate AI report: {str(e)}'
+        }), 500
 
 
 if __name__ == '__main__':

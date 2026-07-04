@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 import SignaturePad from './SignaturePad';
-import { FaUserMd, FaArrowLeft, FaCheckCircle, FaTimes, FaNotesMedical } from 'react-icons/fa';
+import { FaUserMd, FaArrowLeft, FaCheckCircle, FaTimes, FaNotesMedical, FaRobot, FaMagic, FaEdit, FaSync } from 'react-icons/fa';
 
 const Discharge = () => {
   const { patientId, signature, setSigned, signed, setContent } = useAppContext();
@@ -11,6 +11,13 @@ const Discharge = () => {
   const [error, setError] = useState(null);
   const [discharging, setDischarging] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
+
+  // AI Report States
+  const [aiReport, setAiReport] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -27,6 +34,30 @@ const Discharge = () => {
     if (patientId) fetchPatient();
   }, [patientId]);
 
+  // Generate AI Report
+  const handleGenerateAIReport = useCallback(async () => {
+    setAiLoading(true);
+    setAiError(null);
+
+    try {
+      const response = await axios.post(`http://localhost:5000/ai/generate-report/${patientId}`);
+
+      if (response.data.success) {
+        setAiReport(response.data.report);
+        setAiGenerated(true);
+      } else {
+        setAiError(response.data.error || 'Failed to generate AI report.');
+      }
+    } catch (err) {
+      console.error('AI Report Error:', err);
+      setAiError(
+        err.response?.data?.error || 'Failed to connect to AI service. Please check your API key and try again.'
+      );
+    } finally {
+      setAiLoading(false);
+    }
+  }, [patientId]);
+
   const handleDischarge = async () => {
     if (!signature) return;
 
@@ -34,13 +65,14 @@ const Discharge = () => {
     try {
       await axios.post(`http://localhost:5000/discharge/${patientId}`, {
         discharge_date: new Date().toISOString().slice(0, 10),
-        doctor_signature: signature, // must be base64 image URL
+        doctor_signature: signature,
+        ai_report: aiReport || null,
       });
 
       setSuccessMsg("Patient discharged successfully.");
       setSigned(false);
       setTimeout(() => {
-        setContent("generatepdf"); // go back to patient list or relevant screen
+        setContent("generatepdf");
       }, 1000);
     } catch (err) {
       console.error(err);
@@ -65,7 +97,7 @@ const Discharge = () => {
     </div>
   );
 
-  if (error) return (
+  if (error && !patient) return (
     <div className="glass-card p-12 text-center animate-fade-in">
       <p className="text-red-400">{error}</p>
     </div>
@@ -171,11 +203,227 @@ const Discharge = () => {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Signature input */}
-        <div className="mt-8">
-          <SignaturePad />
+      {/* ===================== AI REPORT SECTION ===================== */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <FaRobot className="w-5 h-5 text-purple-400" />
+          <h3 className="text-lg font-semibold text-white">AI Medical Report</h3>
+          <span className="badge" style={{
+            background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(79, 70, 229, 0.2))',
+            border: '1px solid rgba(147, 51, 234, 0.3)',
+            color: '#c084fc'
+          }}>
+            Powered by Gemini
+          </span>
         </div>
+
+        {/* AI Report Card */}
+        <div
+          className="glass-card overflow-hidden"
+          style={{
+            borderImage: 'linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(79, 70, 229, 0.15), rgba(147, 51, 234, 0.1)) 1',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+          }}
+        >
+          {/* AI Card Header */}
+          <div
+            className="px-6 py-4 border-b border-dark-800/50"
+            style={{
+              background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.12), rgba(79, 70, 229, 0.06))',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center justify-center w-10 h-10 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(79, 70, 229, 0.15))',
+                    border: '1px solid rgba(147, 51, 234, 0.25)',
+                  }}
+                >
+                  <FaMagic className="w-4 h-4 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">AI-Generated Medical Summary</p>
+                  <p className="text-xs text-dark-500">
+                    {aiGenerated ? 'Report generated — review and edit before discharge' : 'Generate a professional medical report using AI'}
+                  </p>
+                </div>
+              </div>
+
+              {aiGenerated && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200"
+                    style={{
+                      background: isEditing ? 'rgba(147, 51, 234, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                      border: `1px solid ${isEditing ? 'rgba(147, 51, 234, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      color: isEditing ? '#c084fc' : '#a1a1aa',
+                    }}
+                  >
+                    <FaEdit className="w-3 h-3" />
+                    {isEditing ? 'Preview' : 'Edit'}
+                  </button>
+                  <button
+                    onClick={handleGenerateAIReport}
+                    disabled={aiLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: '#a1a1aa',
+                    }}
+                    title="Regenerate report"
+                  >
+                    <FaSync className={`w-3 h-3 ${aiLoading ? 'animate-spin' : ''}`} />
+                    Regenerate
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* AI Card Body */}
+          <div className="p-6">
+            {!aiGenerated && !aiLoading && (
+              <div className="text-center py-8">
+                <div
+                  className="flex items-center justify-center w-20 h-20 mx-auto mb-5 rounded-2xl"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.15), rgba(79, 70, 229, 0.1))',
+                    border: '1px solid rgba(147, 51, 234, 0.2)',
+                  }}
+                >
+                  <FaRobot className="w-8 h-8 text-purple-400" />
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-2">Generate AI Medical Report</h4>
+                <p className="text-sm text-dark-400 mb-6 max-w-md mx-auto">
+                  Use Google Gemini AI to automatically generate a professional medical summary
+                  based on this patient's treatment history, symptoms, and conditions.
+                </p>
+                <button
+                  onClick={handleGenerateAIReport}
+                  disabled={aiLoading}
+                  className="inline-flex items-center gap-2.5 px-8 py-3 font-semibold text-white rounded-xl shadow-lg transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #9333ea, #4f46e5)',
+                    boxShadow: '0 4px 20px rgba(147, 51, 234, 0.35)',
+                  }}
+                  id="ai-generate-btn"
+                >
+                  <FaMagic className="w-4 h-4" />
+                  ✨ AI Generate Report
+                </button>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {aiLoading && (
+              <div className="text-center py-10">
+                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-5">
+                  {/* Outer spinning ring */}
+                  <div
+                    className="absolute inset-0 rounded-full animate-spin"
+                    style={{
+                      background: 'conic-gradient(from 0deg, transparent, rgba(147, 51, 234, 0.6), transparent)',
+                      WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
+                      mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))',
+                    }}
+                  />
+                  {/* Inner icon */}
+                  <div
+                    className="flex items-center justify-center w-14 h-14 rounded-full"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(79, 70, 229, 0.15))',
+                    }}
+                  >
+                    <FaRobot className="w-6 h-6 text-purple-400 animate-pulse" />
+                  </div>
+                </div>
+                <h4 className="text-lg font-semibold text-white mb-1">Generating Medical Report...</h4>
+                <p className="text-sm text-dark-400">
+                  AI is analyzing patient data and treatment history
+                </p>
+                <div className="flex justify-center gap-1 mt-4">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {aiError && (
+              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <div className="flex items-start gap-3">
+                  <FaTimes className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-400">Failed to generate report</p>
+                    <p className="text-xs text-red-400/70 mt-1">{aiError}</p>
+                    <button
+                      onClick={handleGenerateAIReport}
+                      className="mt-3 text-xs font-medium text-red-400 underline hover:text-red-300 transition-colors"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Generated Report Display */}
+            {aiGenerated && !aiLoading && (
+              <div className="animate-fade-in">
+                {isEditing ? (
+                  <textarea
+                    value={aiReport}
+                    onChange={(e) => setAiReport(e.target.value)}
+                    className="w-full min-h-[300px] p-4 bg-dark-900/60 border border-purple-500/20 rounded-xl text-dark-100 text-sm leading-relaxed font-mono placeholder-dark-500 transition-all duration-300 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/15 resize-y"
+                    placeholder="Edit the AI-generated report..."
+                    id="ai-report-editor"
+                  />
+                ) : (
+                  <div
+                    className="p-5 rounded-xl text-sm text-dark-200 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
+                    style={{
+                      background: 'rgba(19, 19, 31, 0.6)',
+                      border: '1px solid rgba(147, 51, 234, 0.12)',
+                    }}
+                    id="ai-report-preview"
+                  >
+                    {aiReport}
+                  </div>
+                )}
+
+                {/* Report Status Bar */}
+                <div className="flex items-center justify-between mt-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-400" />
+                    <span className="text-xs text-dark-500">
+                      Report generated • {aiReport.split(/\s+/).length} words
+                    </span>
+                  </div>
+                  <span className="text-xs text-dark-600">
+                    {isEditing ? '✏️ Editing mode' : '👁️ Preview mode'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Signature input */}
+      <div className="mt-8">
+        <SignaturePad />
       </div>
 
       {/* Discharge Button */}
@@ -205,6 +453,12 @@ const Discharge = () => {
       {successMsg && (
         <div className="glass-card p-4 text-center">
           <p className="text-accent-400 font-medium">{successMsg}</p>
+        </div>
+      )}
+
+      {error && patient && (
+        <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+          <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
     </div>

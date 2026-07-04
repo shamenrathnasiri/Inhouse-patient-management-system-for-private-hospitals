@@ -12,6 +12,7 @@ class Patient(db.Model):
     admit_date = db.Column(db.String(10), nullable=False)
     discharge_date = db.Column(db.String(10), default="N/A")
     doctor_signature = db.Column(db.Text) # NEW FIELD
+    ai_report = db.Column(db.Text)  # AI-generated medical report
     treatments = db.relationship('Treatment', backref='patient', cascade="all, delete-orphan")
 
 
